@@ -3,13 +3,11 @@ from agents import Runner, InputGuardrailTripwireTriggered
 from banking_agents.triage_agent import triage_agent
 from guardrails.pii_guardrail import pii_guardrail
 from utils.audit_logger import log_event
-from config import OPENAI_API_KEY
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 import openai
 
-openai.api_key = OPENAI_API_KEY
 console = Console()
 
 # Attach PII guardrail to all agents
