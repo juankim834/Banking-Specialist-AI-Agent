@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Banking AI Assistant</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── Header ── */
+    header {
+      width: 100%;
+      max-width: 800px;
+      padding: 18px 24px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid #1e2535;
+    }
+
+    .logo {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .header-text h1 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #f1f5f9;
+    }
+
+    .header-text p {
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    .status-dot {
+      margin-left: auto;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 6px #22c55e88;
+    }
+
+    /* ── Shutdown button ── */
+    #shutdown-btn {
+      margin-left: 14px;
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      border: 1px solid #3f1a1a;
+      background: #1a0a0a;
+      color: #ef4444;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background .15s, border-color .15s, transform .1s;
+    }
+    #shutdown-btn:hover { background: #3b0a0a; border-color: #7f1d1d; }
+    #shutdown-btn:active { transform: scale(.9); }
+    #shutdown-btn svg { width: 14px; height: 14px; }
+
+    /* ── Chat window ── */
+    #chat-window {
+      flex: 1;
+      width: 100%;
+      max-width: 800px;
+      overflow-y: auto;
+      padding: 24px 16px 8px;
+      scroll-behavior: smooth;
+    }
+
+    #chat-window::-webkit-scrollbar { width: 4px; }
+    #chat-window::-webkit-scrollbar-track { background: transparent; }
+    #chat-window::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 4px; }
+
+    /* ── Messages ── */
+    .msg {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
+      animation: fadeIn .2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg.user { flex-direction: row-reverse; }
+
+    .avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+
+    .msg.user .avatar {
+      background: #1e40af;
+    }
+
+    .msg.bot .avatar {
+      background: #1e293b;
+      border: 1px solid #334155;
+    }
+
+    .bubble {
+      max-width: 70%;
+      padding: 11px 15px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      word-break: break-word;
+    }
+
+    .msg.user .bubble {
+      background: #1d4ed8;
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+
+    .msg.bot .bubble {
+      background: #1e293b;
+      color: #e2e8f0;
+      border-bottom-left-radius: 4px;
+      border: 1px solid #2d3748;
+    }
+
+    .msg.error .bubble {
+      background: #3b0a0a;
+      border-color: #7f1d1d;
+      color: #fca5a5;
+    }
+
+    .agent-badge {
+      font-size: 10px;
+      font-weight: 600;
+      color: #3b82f6;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 4px;
+    }
+
+    /* ── Typing indicator ── */
+    .typing .bubble {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      padding: 14px 18px;
+    }
+
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #64748b;
+      animation: bounce 1.2s infinite ease-in-out;
+    }
+
+    .dot:nth-child(2) { animation-delay: .2s; }
+    .dot:nth-child(3) { animation-delay: .4s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(1); opacity: .5; }
+      40%            { transform: scale(1.3); opacity: 1; }
+    }
+
+    /* ── Input bar ── */
+    #input-area {
+      width: 100%;
+      max-width: 800px;
+      padding: 12px 16px 20px;
+    }
+
+    #input-form {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      background: #1e293b;
+      border: 1px solid #2d3748;
+      border-radius: 16px;
+      padding: 10px 10px 10px 16px;
+      transition: border-color .2s;
+    }
+
+    #input-form:focus-within {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px #3b82f620;
+    }
+
+    #user-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #f1f5f9;
+      font-size: 14px;
+      resize: none;
+      max-height: 140px;
+      line-height: 1.5;
+      font-family: inherit;
+    }
+
+    #user-input::placeholder { color: #475569; }
+
+    #send-btn {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      border: none;
+      background: #2563eb;
+      color: #fff;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background .15s, transform .1s;
+    }
+
+    #send-btn:hover:not(:disabled) { background: #1d4ed8; }
+    #send-btn:active:not(:disabled) { transform: scale(.92); }
+    #send-btn:disabled { background: #1e3a5f; cursor: not-allowed; opacity: .6; }
+
+    #send-btn svg { width: 16px; height: 16px; }
+
+    /* ── Hint text ── */
+    .hint {
+      text-align: center;
+      font-size: 11px;
+      color: #334155;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🏦</div>
+  <div class="header-text">
+    <h1>Banking AI Assistant</h1>
+    <p>Account · Loan · Fraud · KYC · Support</p>
+  </div>
+  <div class="status-dot" title="Online"></div>
+  <button id="shutdown-btn" title="Shut down server" onclick="shutdownServer()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18.36 6.64a9 9 0 1 1-12.73 0"/>
+      <line x1="12" y1="2" x2="12" y2="12"/>
+    </svg>
+  </button>
+</header>
+
+<div id="chat-window">
+  <!-- Welcome message -->
+  <div class="msg bot">
+    <div class="avatar">🏦</div>
+    <div>
+      <div class="bubble">
+        Hello! I'm your Banking AI Assistant. I can help you with accounts, loans, fraud alerts, KYC, and general support. How can I help you today?
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="input-area">
+  <form id="input-form" onsubmit="return false;">
+    <textarea
+      id="user-input"
+      rows="1"
+      placeholder="Ask about loans, accounts, fraud…"
+      autofocus
+    ></textarea>
+    <button id="send-btn" type="submit" title="Send">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"/>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </svg>
+    </button>
+  </form>
+  <p class="hint">Enter to send · Shift+Enter for new line</p>
+</div>
+
+<script>
+  const chatWindow  = document.getElementById("chat-window");
+  const inputEl     = document.getElementById("user-input");
+  const sendBtn     = document.getElementById("send-btn");
+  const form        = document.getElementById("input-form");
+
+  let history = [];          // [{role, content}]
+  let isLoading = false;
+
+  // ── Auto-resize textarea ──
+  inputEl.addEventListener("input", () => {
+    inputEl.style.height = "auto";
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + "px";
+  });
+
+  // ── Enter to send, Shift+Enter for newline ──
+  inputEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  form.addEventListener("submit", sendMessage);
+
+  // ── Shutdown server ──
+  async function shutdownServer() {
+    if (!confirm("Shut down the Banking AI server?")) return;
+    try {
+      await fetch("/shutdown", { method: "POST" });
+      document.getElementById("shutdown-btn").disabled = true;
+      document.querySelector(".status-dot").style.background = "#ef4444";
+      document.querySelector(".status-dot").style.boxShadow = "0 0 6px #ef444488";
+      appendMessage("bot", "🔴 Server is shutting down. You can close this tab.", "System");
+    } catch {
+      appendMessage("bot", "❌ Could not reach the server.", "System", true);
+    }
+  }
+
+  function scrollToBottom() {
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
+
+  function appendMessage(role, content, agentName = null, isError = false) {
+    const wrapper = document.createElement("div");
+    wrapper.className = `msg ${role === "user" ? "user" : isError ? "bot error" : "bot"}`;
+
+    const avatar = document.createElement("div");
+    avatar.className = "avatar";
+    avatar.textContent = role === "user" ? "👤" : "🏦";
+
+    const inner = document.createElement("div");
+
+    if (agentName && role !== "user") {
+      const badge = document.createElement("div");
+      badge.className = "agent-badge";
+      badge.textContent = agentName;
+      inner.appendChild(badge);
+    }
+
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.textContent = content;
+
+    inner.appendChild(bubble);
+    wrapper.appendChild(avatar);
+    wrapper.appendChild(inner);
+    chatWindow.appendChild(wrapper);
+    scrollToBottom();
+    return bubble;  // return for live updates
+  }
+
+  function showTyping() {
+    const wrapper = document.createElement("div");
+    wrapper.className = "msg bot typing";
+    wrapper.id = "typing-indicator";
+
+    const avatar = document.createElement("div");
+    avatar.className = "avatar";
+    avatar.textContent = "🏦";
+
+    const inner = document.createElement("div");
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    for (let i = 0; i < 3; i++) {
+      const d = document.createElement("span");
+      d.className = "dot";
+      bubble.appendChild(d);
+    }
+    inner.appendChild(bubble);
+    wrapper.appendChild(avatar);
+    wrapper.appendChild(inner);
+    chatWindow.appendChild(wrapper);
+    scrollToBottom();
+  }
+
+  function removeTyping() {
+    const el = document.getElementById("typing-indicator");
+    if (el) el.remove();
+  }
+
+  async function sendMessage() {
+    const text = inputEl.value.trim();
+    if (!text || isLoading) return;
+
+    // Reset input
+    inputEl.value = "";
+    inputEl.style.height = "auto";
+
+    isLoading = true;
+    sendBtn.disabled = true;
+
+    // Append user message
+    appendMessage("user", text);
+    history.push({ role: "user", content: text });
+
+    showTyping();
+
+    try {
+      const res = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text, history: history.slice(0, -1) }),
+      });
+
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+
+      const reader  = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let botBubble = null;
+      let agentName = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop(); // keep incomplete line
+
+        for (const line of lines) {
+          if (!line.startsWith("data:")) continue;
+          const data = line.slice(5).trim();
+          if (data === "[DONE]") break;
+
+          let parsed;
+          try { parsed = JSON.parse(data); } catch { continue; }
+
+          removeTyping();
+
+          if (!botBubble) {
+            agentName = parsed.agent || null;
+            const isErr = parsed.type === "error";
+            botBubble = appendMessage("bot", parsed.content, agentName, isErr);
+            if (!isErr) history.push({ role: "assistant", content: parsed.content });
+          } else {
+            botBubble.textContent = parsed.content;
+            scrollToBottom();
+          }
+        }
+      }
+    } catch (err) {
+      removeTyping();
+      appendMessage("bot", `❌ Connection error: ${err.message}`, null, true);
+    } finally {
+      isLoading = false;
+      sendBtn.disabled = false;
+      inputEl.focus();
+    }
+  }
+</script>
+</body>
+</html>
