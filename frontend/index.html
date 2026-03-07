@@ -235,6 +235,22 @@
 
     #send-btn svg { width: 16px; height: 16px; }
 
+    /* ── PDF attach button ── */
+    #attach-label {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      border: 1px solid #2d3748;
+      background: transparent;
+      color: #64748b;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background .15s, color .15s, border-color .15s;
+    }
+    #attach-label:hover { background: #1e293b; color: #94a3b8; border-color: #3b82f6; }
+    #attach-label svg  { width: 16px; height: 16px; pointer-events: none; }
+    #attach-label.uploading { opacity: .5; pointer-events: none; }
+
     /* ── Hint text ── */
     .hint {
       text-align: center;
@@ -242,9 +258,169 @@
       color: #334155;
       margin-top: 6px;
     }
+
+    /* ── Login overlay ── */
+    #login-overlay {
+      position: fixed;
+      inset: 0;
+      background: #0f1117;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity .35s ease;
+    }
+    #login-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .login-card {
+      background: #1e293b;
+      border: 1px solid #2d3748;
+      border-radius: 20px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 24px 64px #00000080;
+    }
+    .login-logo {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .login-logo .bank-icon {
+      width: 60px; height: 60px;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      border-radius: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin-bottom: 12px;
+    }
+    .login-logo h2 { font-size: 20px; font-weight: 700; color: #f1f5f9; margin-bottom: 4px; }
+    .login-logo p  { font-size: 13px; color: #64748b; }
+    .login-field { margin-bottom: 16px; }
+    .login-field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 6px;
+    }
+    .login-field input {
+      width: 100%;
+      background: #0f1117;
+      border: 1px solid #2d3748;
+      border-radius: 10px;
+      padding: 11px 14px;
+      color: #f1f5f9;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      font-family: inherit;
+    }
+    .login-field input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px #3b82f620;
+    }
+    .login-error {
+      font-size: 13px;
+      color: #f87171;
+      background: #3b0a0a;
+      border: 1px solid #7f1d1d;
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-bottom: 14px;
+      display: none;
+    }
+    .login-error.visible { display: block; }
+    #login-btn {
+      width: 100%;
+      padding: 12px;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s, transform .1s;
+      margin-top: 4px;
+    }
+    #login-btn:hover:not(:disabled) { background: #1d4ed8; }
+    #login-btn:active:not(:disabled) { transform: scale(.98); }
+    #login-btn:disabled { opacity: .6; cursor: not-allowed; }
+    .demo-hint {
+      margin-top: 20px;
+      padding: 12px;
+      background: #0f172a;
+      border-radius: 10px;
+      border: 1px solid #1e2535;
+    }
+    .demo-hint p {
+      font-size: 11px;
+      color: #64748b;
+      margin-bottom: 6px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+    .demo-hint code {
+      font-size: 11px;
+      color: #94a3b8;
+      font-family: monospace;
+      line-height: 1.8;
+    }
+    /* ── Logout button ── */
+    #logout-btn {
+      margin-left: 8px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid #2d3748;
+      background: transparent;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      transition: background .15s, color .15s;
+      display: none;
+    }
+    #logout-btn.visible { display: block; }
+    #logout-btn:hover { background: #1e293b; color: #f1f5f9; }
   </style>
 </head>
 <body>
+
+<!-- Login overlay -->
+<div id="login-overlay">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="bank-icon">🏦</div>
+      <h2>Banking AI</h2>
+      <p>Sign in to your account</p>
+    </div>
+    <div id="login-error" class="login-error"></div>
+    <div class="login-field">
+      <label for="login-account-id">Account ID</label>
+      <input type="text" id="login-account-id" placeholder="e.g. ACC001" autocomplete="username" />
+    </div>
+    <div class="login-field">
+      <label for="login-password">Password</label>
+      <input type="password" id="login-password" placeholder="Enter your password" autocomplete="current-password" />
+    </div>
+    <button id="login-btn" onclick="loginUser()">Sign In</button>
+    <div class="demo-hint">
+      <p>Demo Credentials</p>
+      <code>
+        ACC001 / demo123 — Jane Doe<br>
+        ACC002 / bank456 — John Smith<br>
+        ACC003 / pass789 — Alice Johnson
+      </code>
+    </div>
+  </div>
+</div>
 
 <header>
   <div class="logo">🏦</div>
@@ -259,6 +435,7 @@
       <line x1="12" y1="2" x2="12" y2="12"/>
     </svg>
   </button>
+  <button id="logout-btn" onclick="logoutUser()" title="Sign out">→ Sign Out</button>
 </header>
 
 <div id="chat-window">
@@ -278,9 +455,16 @@
     <textarea
       id="user-input"
       rows="1"
-      placeholder="Ask about loans, accounts, fraud…"
+      placeholder="Ask about loans, accounts, fraud, market data…"
       autofocus
     ></textarea>
+    <!-- PDF attach button -->
+    <label id="attach-label" title="Attach PDF for analysis">
+      <input type="file" id="pdf-file-input" accept=".pdf" style="display:none" />
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.41 17.41a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+      </svg>
+    </label>
     <button id="send-btn" type="submit" title="Send">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="22" y1="2" x2="11" y2="13"/>
@@ -288,7 +472,7 @@
       </svg>
     </button>
   </form>
-  <p class="hint">Enter to send · Shift+Enter for new line</p>
+  <p class="hint">Enter to send · Shift+Enter for new line · 📎 Attach PDF for document analysis</p>
 </div>
 
 <script>
@@ -296,9 +480,72 @@
   const inputEl     = document.getElementById("user-input");
   const sendBtn     = document.getElementById("send-btn");
   const form        = document.getElementById("input-form");
+  const attachLabel = document.getElementById("attach-label");
+  const pdfInput    = document.getElementById("pdf-file-input");
+
+  // ── PDF upload ──
+  pdfInput.addEventListener("change", () => uploadPDF(pdfInput));
+
+  async function uploadPDF(input) {
+    const file = input.files[0];
+    if (!file) return;
+    attachLabel.classList.add("uploading");
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const resp = await fetch("/upload-pdf", {
+        method: "POST",
+        headers: { "X-Session-Token": sessionToken || "" },
+        body: formData,
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        appendMessage("bot", `❌ PDF upload failed: ${data.detail}`, null, true);
+        return;
+      }
+      // Auto-fill the input and send a message asking the agent to analyze the PDF
+      inputEl.value = `Please analyze the uploaded PDF document: ${data.filename}`;
+      inputEl.style.height = "auto";
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + "px";
+      sendMessage();
+    } catch {
+      appendMessage("bot", "❌ PDF upload failed. Please try again.", null, true);
+    } finally {
+      input.value = "";  // reset so the same file can be re-selected
+      attachLabel.classList.remove("uploading");
+    }
+  }
 
   let history = [];          // [{role, content}]
   let isLoading = false;
+  let sessionToken = localStorage.getItem("session_token") || null;
+
+  // Validate stored token against the server on page load
+  (async () => {
+    if (!sessionToken) return;  // no token → show login
+    try {
+      const resp = await fetch("/me", { headers: { "X-Session-Token": sessionToken } });
+      if (resp.ok) {
+        hideLoginOverlay();  // token is valid, skip login
+      } else {
+        // Stale / invalid token — clear it and show login
+        localStorage.removeItem("session_token");
+        sessionToken = null;
+      }
+    } catch {
+      // Network error — clear token to be safe
+      localStorage.removeItem("session_token");
+      sessionToken = null;
+    }
+  })();
+
+  // Allow Enter key to submit the login form
+  document.getElementById("login-password").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") loginUser();
+  });
+  document.getElementById("login-account-id").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") document.getElementById("login-password").focus();
+  });
 
   // ── Auto-resize textarea ──
   inputEl.addEventListener("input", () => {
@@ -320,7 +567,7 @@
   async function shutdownServer() {
     if (!confirm("Shut down the Banking AI server?")) return;
     try {
-      await fetch("/shutdown", { method: "POST" });
+      await fetch("/shutdown", { method: "POST", headers: { "X-Session-Token": sessionToken || "" } });
       document.getElementById("shutdown-btn").disabled = true;
       document.querySelector(".status-dot").style.background = "#ef4444";
       document.querySelector(".status-dot").style.boxShadow = "0 0 6px #ef444488";
@@ -328,6 +575,69 @@
     } catch {
       appendMessage("bot", "❌ Could not reach the server.", "System", true);
     }
+  }
+
+  // ── Login / Logout ──
+  async function loginUser() {
+    const accountId = document.getElementById("login-account-id").value.trim();
+    const password  = document.getElementById("login-password").value;
+    const loginBtn  = document.getElementById("login-btn");
+    if (!accountId || !password) { showLoginError("Please enter your Account ID and password."); return; }
+    loginBtn.disabled = true;
+    loginBtn.textContent = "Signing in…";
+    document.getElementById("login-error").classList.remove("visible");
+    try {
+      const resp = await fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ account_id: accountId, password }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) { showLoginError(data.detail || "Invalid credentials."); return; }
+      sessionToken = data.session_token;
+      localStorage.setItem("session_token", sessionToken);
+      hideLoginOverlay();
+      appendMessage("bot", `Welcome back, ${data.owner}! 👋 Your account (${data.account_id}) is now active. How can I help you today?`, "Account Specialist");
+    } catch {
+      showLoginError("Connection error. Please try again.");
+    } finally {
+      loginBtn.disabled = false;
+      loginBtn.textContent = "Sign In";
+    }
+  }
+
+  function showLoginError(msg) {
+    const el = document.getElementById("login-error");
+    el.textContent = msg;
+    el.classList.add("visible");
+  }
+
+  function hideLoginOverlay() {
+    const overlay = document.getElementById("login-overlay");
+    overlay.classList.add("hidden");
+    document.getElementById("logout-btn").classList.add("visible");
+    setTimeout(() => { overlay.style.display = "none"; }, 400);
+  }
+
+  async function logoutUser() {
+    try {
+      await fetch("/logout", { method: "POST", headers: { "X-Session-Token": sessionToken || "" } });
+    } catch {}
+    sessionToken = null;
+    localStorage.removeItem("session_token");
+    history = [];
+    chatWindow.innerHTML = `
+      <div class="msg bot">
+        <div class="avatar">🏦</div>
+        <div><div class="bubble">Hello! I'm your Banking AI Assistant. I can help you with accounts, loans, fraud alerts, KYC, and general support. How can I help you today?</div></div>
+      </div>`;
+    const overlay = document.getElementById("login-overlay");
+    overlay.style.display = "flex";
+    requestAnimationFrame(() => overlay.classList.remove("hidden"));
+    document.getElementById("logout-btn").classList.remove("visible");
+    document.getElementById("login-account-id").value = "";
+    document.getElementById("login-password").value = "";
+    document.getElementById("login-error").classList.remove("visible");
   }
 
   function scrollToBottom() {
@@ -412,10 +722,14 @@
     try {
       const res = await fetch("/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Session-Token": sessionToken || "",
+        },
         body: JSON.stringify({ message: text, history: history.slice(0, -1) }),
       });
 
+      if (res.status === 401) { await logoutUser(); return; }
       if (!res.ok) throw new Error(`Server error: ${res.status}`);
 
       const reader  = res.body.getReader();

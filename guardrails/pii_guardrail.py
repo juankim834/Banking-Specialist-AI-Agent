@@ -3,10 +3,10 @@ from agents import GuardrailFunctionOutput, RunContextWrapper, input_guardrail, 
 from pydantic import BaseModel
 
 PII_PATTERNS = [
-    r"\b\d{16}\b",                        # Credit/Debit card numbers
-    r"\b\d{3}-\d{2}-\d{4}\b",            # SSN
-    r"\b[A-Z]{2}\d{6}[A-Z]\b",           # Passport-style IDs
-    r"\b\d{9,18}\b",                       # Bank account numbers
+    r"\b\d{16}\b", # Credit/Debit card numbers
+    r"\b\d{3}-\d{2}-\d{4}\b", # SSN
+    r"\b[A-Z]{2}\d{6}[A-Z]\b", # Passport-style IDs
+    r"\b\d{9,18}\b", # Bank account numbers
 ]
 
 class PIIDetectionOutput(BaseModel):

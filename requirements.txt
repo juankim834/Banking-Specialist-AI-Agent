@@ -5,3 +5,14 @@ openai-agents[litellm]>=0.0.10
 fastapi>=0.111.0
 uvicorn[standard]>=0.29.0
 python-multipart>=0.0.9
+# Heterogeneous Data Synthesis
+pypdf>=4.0.0
+fredapi>=0.5.1
+yfinance>=0.2.40
+# RAG Pipeline — Document Parsing & Chunking
+pymupdf>=1.23.0          # PDF parsing, heading detection, native table extraction
+pdfplumber>=0.10.0       # Table extraction fallback
+# RAG Pipeline — Hybrid Search
+rank-bm25>=0.2.2         # BM25Okapi keyword search
+sentence-transformers>=3.0.0  # Dense vector embeddings (all-MiniLM-L6-v2)
+numpy>=1.26.0            # Cosine similarity via dot product
