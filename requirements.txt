@@ -16,3 +16,4 @@ pdfplumber>=0.10.0       # Table extraction fallback
 rank-bm25>=0.2.2         # BM25Okapi keyword search
 sentence-transformers>=3.0.0  # Dense vector embeddings (all-MiniLM-L6-v2)
 numpy>=1.26.0            # Cosine similarity via dot product
+bcrypt>=4.0.0             # Password hashing for user authentication
