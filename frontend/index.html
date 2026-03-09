@@ -523,6 +523,30 @@
     }
     #docs-btn:hover { background: #1e293b; color: #94a3b8; border-color: #3b82f6; }
 
+    /* ── Walkthrough page link button ── */
+    #walkthrough-btn {
+      margin-left: 8px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 0 11px;
+      height: 30px;
+      border-radius: 8px;
+      border: 1px solid #2d4a7a;
+      background: #1e3a5f;
+      color: #93c5fd;
+      cursor: pointer;
+      flex-shrink: 0;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: background .15s, color .15s, border-color .15s;
+    }
+    #walkthrough-btn:hover { background: #1e4080; color: #bfdbfe; border-color: #3b82f6; }
+    #walkthrough-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+
     /* ── Document Library slide-in panel ── */
     #doc-panel-overlay {
       position: fixed;
@@ -895,6 +919,16 @@
     </svg>
   </button>
   <button id="docs-btn" title="Document Library" onclick="openDocLib()">&#128218;</button>
+  <a id="walkthrough-btn" href="/static/walkthrough.html" target="_blank" title="Project Walkthrough">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/>
+      <line x1="16" y1="17" x2="8" y2="17"/>
+      <polyline points="10 9 9 9 8 9"/>
+    </svg>
+    Docs
+  </a>
   <button id="settings-btn" title="API Key Settings" onclick="openSettings()">
     <span class="key-dot" id="key-dot"></span>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

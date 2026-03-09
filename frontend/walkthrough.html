@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project Walkthrough — Banking AI Agent</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0f1117;
+      --surface:  #1e293b;
+      --surface2: #0f172a;
+      --border:   #2d3748;
+      --border2:  #1e2535;
+      --text:     #e2e8f0;
+      --muted:    #64748b;
+      --subtle:   #94a3b8;
+      --accent:   #3b82f6;
+      --accent2:  #60a5fa;
+      --green:    #22c55e;
+      --yellow:   #eab308;
+      --red:      #ef4444;
+      --purple:   #a855f7;
+      --teal:     #14b8a6;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    /* ── Top Nav ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: #0d1018ee;
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border2);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 32px;
+    }
+
+    nav .logo {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    nav h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+
+    nav .pill {
+      font-size: 10px;
+      font-weight: 700;
+      background: #1e3a5f;
+      color: var(--accent2);
+      border: 1px solid #2d4a7a;
+      border-radius: 20px;
+      padding: 2px 9px;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+    }
+
+    #back-btn {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--subtle);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background .15s, color .15s, border-color .15s;
+    }
+    #back-btn:hover { background: var(--surface); color: var(--text); border-color: var(--accent); }
+    #back-btn svg { width: 14px; height: 14px; }
+
+    /* ── Layout ── */
+    .layout {
+      display: flex;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+      gap: 40px;
+      align-items: flex-start;
+    }
+
+    /* ── Sidebar TOC ── */
+    aside {
+      width: 220px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 72px;
+    }
+
+    aside h3 {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .toc-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 7px;
+      font-size: 13px;
+      color: var(--subtle);
+      text-decoration: none;
+      transition: background .12s, color .12s;
+      margin-bottom: 2px;
+    }
+    .toc-link:hover { background: var(--surface); color: var(--text); }
+    .toc-link.active { background: #1e3a5f; color: var(--accent2); }
+    .toc-icon { font-size: 13px; width: 18px; text-align: center; }
+
+    /* ── Main Content ── */
+    main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 48px 40px;
+      margin-bottom: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 240px; height: 240px;
+      background: radial-gradient(circle, #3b82f620, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #1e3a5f;
+      border: 1px solid #2d4a7a;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      color: var(--accent2);
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .hero h2 {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1.2;
+      color: #f1f5f9;
+      margin-bottom: 14px;
+    }
+
+    .hero h2 span { color: var(--accent); }
+
+    .hero p {
+      font-size: 15px;
+      color: var(--subtle);
+      max-width: 560px;
+      margin-bottom: 28px;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      text-align: center;
+    }
+    .stat .num {
+      font-size: 24px;
+      font-weight: 800;
+      color: #f1f5f9;
+    }
+    .stat .label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    /* ── Section ── */
+    section {
+      margin-bottom: 48px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border2);
+    }
+
+    .section-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .section-header h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+
+    .section-header p {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+    }
+
+    .card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #f1f5f9;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card p {
+      font-size: 13.5px;
+      color: var(--subtle);
+      line-height: 1.65;
+    }
+
+    .card ul {
+      list-style: none;
+      margin-top: 10px;
+    }
+
+    .card ul li {
+      font-size: 13px;
+      color: var(--subtle);
+      padding: 4px 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .card ul li::before {
+      content: '›';
+      color: var(--accent);
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* ── Agent Grid ── */
+    .agent-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .agent-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    .agent-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px #3b82f620, 0 8px 24px #00000040;
+    }
+
+    .agent-card .agent-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .agent-card .agent-icon {
+      width: 40px; height: 40px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .agent-card .agent-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+
+    .agent-card .agent-role {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .agent-card p {
+      font-size: 13px;
+      color: var(--subtle);
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .tag {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 20px;
+      border: 1px solid;
+    }
+
+    .tag-blue   { color: #93c5fd; background: #1e3a5f40; border-color: #2d4a7a; }
+    .tag-green  { color: #86efac; background: #14532d40; border-color: #166534; }
+    .tag-yellow { color: #fde047; background: #78350f40; border-color: #92400e; }
+    .tag-red    { color: #fca5a5; background: #3b0a0a40; border-color: #7f1d1d; }
+    .tag-purple { color: #d8b4fe; background: #3b0764 40; border-color: #6b21a8; }
+    .tag-teal   { color: #5eead4; background: #14432940; border-color: #0f766e; }
+
+    /* ── File Tree ── */
+    .file-tree {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      padding: 20px 24px;
+      font-family: "Fira Code", "Cascadia Code", Consolas, monospace;
+      font-size: 13px;
+    }
+
+    .file-tree .tree-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 0;
+      color: var(--subtle);
+    }
+
+    .file-tree .tree-line.folder { color: var(--accent2); font-weight: 600; }
+    .file-tree .tree-line.indent1 { padding-left: 20px; }
+    .file-tree .tree-line.indent2 { padding-left: 40px; }
+    .file-tree .tree-line.indent3 { padding-left: 60px; }
+
+    .file-tree .file-desc {
+      color: var(--muted);
+      font-family: -apple-system, sans-serif;
+      font-size: 12px;
+      margin-left: auto;
+    }
+
+    /* ── Flow Diagram ── */
+    .flow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 16px 0;
+    }
+
+    .flow-node {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #f1f5f9;
+      text-align: center;
+    }
+
+    .flow-node.primary {
+      background: #1e3a5f;
+      border-color: #2d5a9f;
+      color: var(--accent2);
+    }
+
+    .flow-arrow {
+      color: var(--muted);
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    /* ── API Table ── */
+    .api-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .api-table th {
+      background: #1e3a5f;
+      color: #bfdbfe;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid #2d4a7a;
+    }
+
+    .api-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border2);
+      color: var(--subtle);
+      vertical-align: top;
+    }
+
+    .api-table tr:last-child td { border-bottom: none; }
+    .api-table tr:hover td { background: #182030; }
+
+    .method {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 5px;
+      font-family: monospace;
+      letter-spacing: .3px;
+    }
+    .method-get  { background: #14532d; color: #86efac; }
+    .method-post { background: #1e3a5f; color: #93c5fd; }
+
+    code {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      color: #7dd3fc;
+      padding: .15em .45em;
+      border-radius: 5px;
+      font-size: .875em;
+      font-family: "Fira Code", Consolas, monospace;
+    }
+
+    /* ── Tech Stack badges ── */
+    .stack-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .stack-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 160px;
+    }
+
+    .stack-item .si-icon { font-size: 22px; }
+    .stack-item .si-name { font-size: 13px; font-weight: 600; color: #f1f5f9; }
+    .stack-item .si-role { font-size: 11px; color: var(--muted); }
+
+    /* ── Security section ── */
+    .security-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 14px;
+    }
+
+    .sec-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+    }
+
+    .sec-card .sec-icon { font-size: 22px; margin-bottom: 8px; }
+    .sec-card h4 { font-size: 14px; font-weight: 700; color: #f1f5f9; margin-bottom: 6px; }
+    .sec-card p  { font-size: 12.5px; color: var(--subtle); line-height: 1.6; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 32px;
+      border-top: 1px solid var(--border2);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 4px; }
+
+    @media (max-width: 768px) {
+      aside { display: none; }
+      .layout { padding: 24px 16px 60px; }
+      .hero { padding: 28px 20px; }
+      .hero h2 { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Navigation ── -->
+<nav>
+  <div class="logo">🏦</div>
+  <h1>Banking AI Agent</h1>
+  <span class="pill">Docs</span>
+  <a href="/" id="back-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M19 12H5M12 5l-7 7 7 7"/>
+    </svg>
+    Back to Chat
+  </a>
+</nav>
+
+<div class="layout">
+
+  <!-- ── Sidebar TOC ── -->
+  <aside>
+    <h3>Contents</h3>
+    <a class="toc-link" href="#overview"><span class="toc-icon">🗺️</span> Overview</a>
+    <a class="toc-link" href="#architecture"><span class="toc-icon">🏗️</span> Architecture</a>
+    <a class="toc-link" href="#structure"><span class="toc-icon">📁</span> File Structure</a>
+    <a class="toc-link" href="#agents"><span class="toc-icon">🤖</span> Agents</a>
+    <a class="toc-link" href="#tools"><span class="toc-icon">🔧</span> Tools</a>
+    <a class="toc-link" href="#api"><span class="toc-icon">🌐</span> API Endpoints</a>
+    <a class="toc-link" href="#security"><span class="toc-icon">🔒</span> Security</a>
+    <a class="toc-link" href="#rag"><span class="toc-icon">📚</span> RAG Pipeline</a>
+    <a class="toc-link" href="#config"><span class="toc-icon">⚙️</span> Configuration</a>
+    <a class="toc-link" href="#stack"><span class="toc-icon">🛠️</span> Tech Stack</a>
+    <a class="toc-link" href="#flow"><span class="toc-icon">🔄</span> Request Flow</a>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main>
+
+    <!-- Hero -->
+    <div class="hero" id="overview">
+      <div class="hero-badge">📖 Project Walkthrough</div>
+      <h2>Banking AI <span>Multi-Agent</span> System</h2>
+      <p>
+        A production-ready AI banking assistant built with the OpenAI Agents SDK. A central
+        <strong>Triage Orchestrator</strong> routes every customer request to the correct specialist
+        agent — all served through a secure FastAPI backend and a single-page web chat interface.
+      </p>
+      <div class="hero-stats">
+        <div class="stat"><div class="num">7</div><div class="label">AI Agents</div></div>
+        <div class="stat"><div class="num">14+</div><div class="label">Tool Functions</div></div>
+        <div class="stat"><div class="num">9</div><div class="label">REST Endpoints</div></div>
+        <div class="stat"><div class="num">1</div><div class="label">Guardrail</div></div>
+      </div>
+    </div>
+
+    <!-- Architecture -->
+    <section id="architecture">
+      <div class="section-header">
+        <div class="section-icon" style="background:#1e3a5f;">🏗️</div>
+        <div>
+          <h2>System Architecture</h2>
+          <p>How the layers connect end-to-end</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>🔁 Orchestrator Pattern</h3>
+        <p>
+          The system uses an <strong>Orchestrator → Specialist</strong> pattern. A single <code>triage_agent</code>
+          acts as the central brain, receiving every user message. Rather than handing off the conversation,
+          it calls specialist agents as <em>tools</em> — allowing it to chain multiple specialists in
+          one reply (e.g., checking an account balance AND running fraud analysis in the same response).
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>🌐 Web Layer</h3>
+        <p>
+          A <strong>FastAPI</strong> server (<code>server.py</code>) exposes a REST API consumed by the
+          single-page frontend (<code>frontend/index.html</code>). The <code>/chat</code> endpoint
+          returns a <strong>Server-Sent Events (SSE)</strong> stream, enabling real-time token delivery.
+          Static frontend assets are served directly from FastAPI's <code>StaticFiles</code> mount.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>🖥️ CLI Layer</h3>
+        <p>
+          <code>main.py</code> provides a standalone terminal interface using the <strong>Rich</strong>
+          library for pretty-printed output. It connects directly to the same <code>triage_agent</code>
+          without the HTTP layer, useful for local development and testing.
+        </p>
+      </div>
+    </section>
+
+    <!-- File Structure -->
+    <section id="structure">
+      <div class="section-header">
+        <div class="section-icon" style="background:#14432940; border:1px solid #0f766e;">📁</div>
+        <div>
+          <h2>File Structure</h2>
+          <p>Every file and its purpose</p>
+        </div>
+      </div>
+
+      <div class="file-tree">
+        <div class="tree-line folder">📦 Banking-Specialist-AI-Agent/</div>
+
+        <div class="tree-line indent1">├── 📄 config.py <span class="file-desc">LLM model config &amp; base document list</span></div>
+        <div class="tree-line indent1">├── 📄 main.py <span class="file-desc">CLI entry point (Rich terminal chat)</span></div>
+        <div class="tree-line indent1">├── 📄 server.py <span class="file-desc">FastAPI web server + all REST endpoints</span></div>
+        <div class="tree-line indent1">├── 📄 requirements.txt <span class="file-desc">Python package dependencies</span></div>
+        <div class="tree-line indent1">├── 📄 README.md <span class="file-desc">Setup &amp; usage instructions</span></div>
+
+        <div class="tree-line">&nbsp;</div>
+        <div class="tree-line indent1 folder">├── 🤖 banking_agents/</div>
+        <div class="tree-line indent2">├── triage_agent.py <span class="file-desc">Orchestrator — routes to all specialists</span></div>
+        <div class="tree-line indent2">├── account_agent.py <span class="file-desc">Balance, history, transfers</span></div>
+        <div class="tree-line indent2">├── fraud_agent.py <span class="file-desc">Fraud detection &amp; account freeze</span></div>
+        <div class="tree-line indent2">├── loan_agent.py <span class="file-desc">Loan eligibility &amp; products</span></div>
+        <div class="tree-line indent2">├── kyc_agent.py <span class="file-desc">KYC identity &amp; AML checks</span></div>
+        <div class="tree-line indent2">├── support_agent.py <span class="file-desc">General FAQ &amp; guidance</span></div>
+        <div class="tree-line indent2">└── data_agent.py <span class="file-desc">Stocks, FRED data &amp; PDF analysis</span></div>
+
+        <div class="tree-line">&nbsp;</div>
+        <div class="tree-line indent1 folder">├── 🔧 tools/</div>
+        <div class="tree-line indent2">├── account_tools.py <span class="file-desc">get_balance, get_history, transfer_funds, _verify_credentials</span></div>
+        <div class="tree-line indent2">├── fraud_tools.py <span class="file-desc">analyze_transaction_for_fraud, freeze_account</span></div>
+        <div class="tree-line indent2">├── loan_tools.py <span class="file-desc">check_loan_eligibility, get_loan_products</span></div>
+        <div class="tree-line indent2">├── kyc_tools.py <span class="file-desc">verify_customer_identity, run_aml_check</span></div>
+        <div class="tree-line indent2">├── data_synthesis_tools.py <span class="file-desc">extract_pdf_text, fetch_fred_series, fetch_stock_data</span></div>
+        <div class="tree-line indent2">├── rag_tools.py <span class="file-desc">index_financial_document, search_financial_documents</span></div>
+        <div class="tree-line indent2">├── hybrid_search.py <span class="file-desc">BM25 + vector search with RRF fusion</span></div>
+        <div class="tree-line indent2">└── document_processor.py <span class="file-desc">PDF parsing &amp; section chunking</span></div>
+
+        <div class="tree-line">&nbsp;</div>
+        <div class="tree-line indent1 folder">├── 🛡️ guardrails/</div>
+        <div class="tree-line indent2">└── pii_guardrail.py <span class="file-desc">Regex-based PII detection (cards, SSN, accounts)</span></div>
+
+        <div class="tree-line">&nbsp;</div>
+        <div class="tree-line indent1 folder">├── 📊 utils/</div>
+        <div class="tree-line indent2">└── audit_logger.py <span class="file-desc">Structured JSON audit log to audit.log</span></div>
+
+        <div class="tree-line">&nbsp;</div>
+        <div class="tree-line indent1 folder">├── 🌐 frontend/</div>
+        <div class="tree-line indent2">├── index.html <span class="file-desc">Main chat SPA (login, markdown chat, PDF upload)</span></div>
+        <div class="tree-line indent2">└── walkthrough.html <span class="file-desc">This documentation page</span></div>
+
+        <div class="tree-line">&nbsp;</div>
+        <div class="tree-line indent1 folder">└── 📂 uploads/</div>
+        <div class="tree-line indent2">└── *.pdf <span class="file-desc">Uploaded PDFs available for RAG indexing</span></div>
+      </div>
+    </section>
+
+    <!-- Agents -->
+    <section id="agents">
+      <div class="section-header">
+        <div class="section-icon" style="background:#3b0764 40; border:1px solid #6b21a8;">🤖</div>
+        <div>
+          <h2>Agents</h2>
+          <p>Every agent, its model, responsibility, and tools</p>
+        </div>
+      </div>
+
+      <div class="agent-grid">
+
+        <!-- Triage -->
+        <div class="agent-card">
+          <div class="agent-head">
+            <div class="agent-icon" style="background:#1e3a5f;">🎯</div>
+            <div>
+              <div class="agent-name">Banking AI Assistant</div>
+              <div class="agent-role">Triage Orchestrator</div>
+            </div>
+          </div>
+          <p>The central entry point. Receives every user message, decides which specialist(s) to call as tools, and assembles the final unified reply. Handles compound requests by calling multiple specialists in sequence.</p>
+          <div class="tag-row">
+            <span class="tag tag-blue">TRIAGE_MODEL</span>
+            <span class="tag tag-green">6 sub-tools</span>
+            <span class="tag tag-yellow">PII Guardrail</span>
+          </div>
+        </div>
+
+        <!-- Account -->
+        <div class="agent-card">
+          <div class="agent-head">
+            <div class="agent-icon" style="background:#14532d40; border:1px solid #166534;">💼</div>
+            <div>
+              <div class="agent-name">Account Specialist</div>
+              <div class="agent-role">account_agent.py</div>
+            </div>
+          </div>
+          <p>Retrieves account balances, provides transaction history summaries, and processes fund transfers. Enforces the $50,000 single-transfer regulatory cap.</p>
+          <div class="tag-row">
+            <span class="tag tag-green">get_account_balance</span>
+            <span class="tag tag-green">get_transaction_history</span>
+            <span class="tag tag-green">transfer_funds</span>
+          </div>
+        </div>
+
+        <!-- Fraud -->
+        <div class="agent-card">
+          <div class="agent-head">
+            <div class="agent-icon" style="background:#3b0a0a40; border:1px solid #7f1d1d;">🚨</div>
+            <div>
+              <div class="agent-name">Fraud Detection Specialist</div>
+              <div class="agent-role">fraud_agent.py</div>
+            </div>
+          </div>
+          <p>Investigates suspicious transactions using a structured 3-step workflow: fetch history → analyze risk → report. Automatically freezes accounts on HIGH risk verdicts. Risk thresholds: LOW &lt;30, MEDIUM 30–59, HIGH ≥60.</p>
+          <div class="tag-row">
+            <span class="tag tag-red">analyze_transaction_for_fraud</span>
+            <span class="tag tag-red">freeze_account</span>
+            <span class="tag tag-green">get_transaction_history</span>
+          </div>
+        </div>
+
+        <!-- Loan -->
+        <div class="agent-card">
+          <div class="agent-head">
+            <div class="agent-icon" style="background:#78350f40; border:1px solid #92400e;">🏠</div>
+            <div>
+              <div class="agent-name">Loan &amp; Credit Specialist</div>
+              <div class="agent-role">loan_agent.py</div>
+            </div>
+          </div>
+          <p>Assesses loan eligibility based on credit score and debt-to-income ratio. Recommends mortgage, personal, or auto loan products. Always notes that final approval requires underwriting.</p>
+          <div class="tag-row">
+            <span class="tag tag-yellow">check_loan_eligibility</span>
+            <span class="tag tag-yellow">get_loan_products</span>
+          </div>
+        </div>
+
+        <!-- KYC -->
+        <div class="agent-card">
+          <div class="agent-head">
+            <div class="agent-icon" style="background:#3b076440; border:1px solid #6b21a8;">🪪</div>
+            <div>
+              <div class="agent-name">KYC &amp; Compliance Specialist</div>
+              <div class="agent-role">kyc_agent.py</div>
+            </div>
+          </div>
+          <p>Performs KYC identity verification and AML (Anti-Money Laundering) screening. Flags Currency Transaction Reports (CTR) for cash transactions over $10,000. Compliant with Bank Secrecy Act (BSA).</p>
+          <div class="tag-row">
+            <span class="tag tag-purple">verify_customer_identity</span>
+            <span class="tag tag-purple">run_aml_check</span>
+          </div>
+        </div>
+
+        <!-- Support -->
+        <div class="agent-card">
+          <div class="agent-head">
+            <div class="agent-icon" style="background:#0f766e40; border:1px solid #0d9488;">💬</div>
+            <div>
+              <div class="agent-name">General Banking Support</div>
+              <div class="agent-role">support_agent.py</div>
+            </div>
+          </div>
+          <p>Handles general FAQs, branch hours, product information, and guides customers to the right resources. Uses the lighter TRIAGE_MODEL — no account data access needed.</p>
+          <div class="tag-row">
+            <span class="tag tag-teal">TRIAGE_MODEL</span>
+            <span class="tag tag-teal">No tools</span>
+          </div>
+        </div>
+
+        <!-- Data -->
+        <div class="agent-card">
+          <div class="agent-head">
+            <div class="agent-icon" style="background:#1e3a5f;">📊</div>
+            <div>
+              <div class="agent-name">Data Synthesis Specialist</div>
+              <div class="agent-role">data_agent.py</div>
+            </div>
+          </div>
+          <p>Fetches real-time stock prices (Yahoo Finance), FRED macroeconomic series (fed funds rate, CPI, GDP, yield curve), and performs intelligent RAG search over uploaded financial PDFs.</p>
+          <div class="tag-row">
+            <span class="tag tag-blue">fetch_stock_data</span>
+            <span class="tag tag-blue">fetch_fred_series</span>
+            <span class="tag tag-blue">extract_pdf_text</span>
+            <span class="tag tag-blue">index / search docs</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Tools -->
+    <section id="tools">
+      <div class="section-header">
+        <div class="section-icon" style="background:#14532d40; border:1px solid #166534;">🔧</div>
+        <div>
+          <h2>Tool Functions</h2>
+          <p>Atomic capabilities injected into agents</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>💼 account_tools.py</h3>
+        <p>Simulated banking data layer (replace with real DB calls in production).</p>
+        <ul>
+          <li><code>get_account_balance(account_id)</code> — returns balance, type, status, owner.</li>
+          <li><code>get_transaction_history(account_id, limit=10)</code> — returns recent transactions with running balance.</li>
+          <li><code>transfer_funds(from, to, amount, currency)</code> — enforces $50,000 transfer cap; returns transaction ID on success.</li>
+          <li><code>_verify_credentials(account_id, password)</code> — bcrypt password check with rate-limiting (5 attempts, 60s lockout).</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>🚨 fraud_tools.py</h3>
+        <p>Heuristic risk scoring engine.</p>
+        <ul>
+          <li><code>analyze_transaction_for_fraud(transaction_id, amount, location, merchant)</code> — adds weighted risk points for high-value amounts (&gt;$10k: +40), suspicious locations (+50), high-risk merchant categories (+30). Returns risk score, level, flags, and recommendation.</li>
+          <li><code>freeze_account(account_id, reason)</code> — marks account as frozen and logs the action.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>🏠 loan_tools.py</h3>
+        <p>Loan eligibility and product catalogue.</p>
+        <ul>
+          <li><code>check_loan_eligibility(customer_id, loan_type, requested_amount)</code> — evaluates credit score and debt-to-income ratio against thresholds per loan type.</li>
+          <li><code>get_loan_products(loan_type)</code> — returns available product tiers with rates, terms, and max amounts.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>🪪 kyc_tools.py</h3>
+        <p>Identity and compliance tooling.</p>
+        <ul>
+          <li><code>verify_customer_identity(customer_id, document_type, document_number)</code> — returns verification status and risk rating.</li>
+          <li><code>run_aml_check(customer_id, transaction_amount, transaction_type)</code> — flags CTR requirements and suspicious activity; returns AML status and SAR recommendation.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>📊 data_synthesis_tools.py</h3>
+        <p>Real-world external data integrations.</p>
+        <ul>
+          <li><code>fetch_stock_data(ticker, period)</code> — pulls OHLCV data from Yahoo Finance for any ticker (JPM, BAC, SPY, etc.).</li>
+          <li><code>fetch_fred_series(series_id, limit)</code> — pulls any FRED macroeconomic series (FEDFUNDS, MORTGAGE30US, CPIAUCSL, etc.).</li>
+          <li><code>extract_pdf_text(filename)</code> — quick full-text dump from an uploaded PDF using PyPDF.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>📚 rag_tools.py + hybrid_search.py</h3>
+        <p>Intelligent document search pipeline (see RAG section for full details).</p>
+        <ul>
+          <li><code>index_financial_document(filename)</code> — parses, chunks by section, stores vectors.</li>
+          <li><code>search_financial_documents(query, top_k)</code> — hybrid BM25 + semantic retrieval with Reciprocal Rank Fusion.</li>
+        </ul>
+      </div>
+
+    </section>
+
+    <!-- API Endpoints -->
+    <section id="api">
+      <div class="section-header">
+        <div class="section-icon" style="background:#1e3a5f;">🌐</div>
+        <div>
+          <h2>API Endpoints</h2>
+          <p>FastAPI routes exposed by server.py</p>
+        </div>
+      </div>
+
+      <div class="card" style="padding: 0; overflow: hidden;">
+        <table class="api-table">
+          <thead>
+            <tr>
+              <th>Method</th>
+              <th>Path</th>
+              <th>Auth</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="method method-get">GET</span></td>
+              <td><code>/</code></td>
+              <td>—</td>
+              <td>Serves <code>frontend/index.html</code></td>
+            </tr>
+            <tr>
+              <td><span class="method method-post">POST</span></td>
+              <td><code>/login</code></td>
+              <td>—</td>
+              <td>Validates account_id + password (bcrypt). Returns a signed HMAC-SHA256 session token.</td>
+            </tr>
+            <tr>
+              <td><span class="method method-post">POST</span></td>
+              <td><code>/logout</code></td>
+              <td>Token</td>
+              <td>Logs the logout event; client discards token.</td>
+            </tr>
+            <tr>
+              <td><span class="method method-get">GET</span></td>
+              <td><code>/me</code></td>
+              <td>Token</td>
+              <td>Returns the authenticated <code>account_id</code> or 401.</td>
+            </tr>
+            <tr>
+              <td><span class="method method-post">POST</span></td>
+              <td><code>/chat</code></td>
+              <td>Token</td>
+              <td>Streams agent response as SSE. Accepts message, history, and optional custom API key/model.</td>
+            </tr>
+            <tr>
+              <td><span class="method method-post">POST</span></td>
+              <td><code>/upload-pdf</code></td>
+              <td>Token</td>
+              <td>Accepts a PDF multipart upload, saves to <code>uploads/</code>. Sanitises filename to prevent path traversal.</td>
+            </tr>
+            <tr>
+              <td><span class="method method-get">GET</span></td>
+              <td><code>/documents</code></td>
+              <td>Token</td>
+              <td>Lists all PDFs in <code>uploads/</code> with index status, size, and base-doc flag.</td>
+            </tr>
+            <tr>
+              <td><span class="method method-post">POST</span></td>
+              <td><code>/index-document</code></td>
+              <td>Token</td>
+              <td>Triggers BM25 + vector indexing for a previously uploaded PDF.</td>
+            </tr>
+            <tr>
+              <td><span class="method method-post">POST</span></td>
+              <td><code>/shutdown</code></td>
+              <td>—</td>
+              <td>Gracefully sends SIGINT to the uvicorn process after a 0.5s delay.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Security -->
+    <section id="security">
+      <div class="section-header">
+        <div class="section-icon" style="background:#3b0a0a40; border:1px solid #7f1d1d;">🔒</div>
+        <div>
+          <h2>Security</h2>
+          <p>Defence layers protecting the system</p>
+        </div>
+      </div>
+
+      <div class="security-grid">
+        <div class="sec-card">
+          <div class="sec-icon">🔑</div>
+          <h4>HMAC Session Tokens</h4>
+          <p>Login returns a <code>payload.HMAC-SHA256</code> token. Every protected endpoint verifies the signature server-side. No JWTs, no cookies — stateless and tamper-proof.</p>
+        </div>
+        <div class="sec-card">
+          <div class="sec-icon">🔐</div>
+          <h4>Bcrypt Password Hashing</h4>
+          <p>Passwords are stored as bcrypt hashes with random salts. Comparison uses constant-time <code>checkpw</code> to prevent timing attacks.</p>
+        </div>
+        <div class="sec-card">
+          <div class="sec-icon">🚫</div>
+          <h4>Rate Limiting on Login</h4>
+          <p>After 5 failed attempts, accounts are locked for 60 seconds. Failed attempts for unknown usernames add a 0.5s artificial delay to prevent username enumeration.</p>
+        </div>
+        <div class="sec-card">
+          <div class="sec-icon">🕵️</div>
+          <h4>PII Input Guardrail</h4>
+          <p>Every chat message is scanned by <code>pii_guardrail</code> before reaching any agent. Regex patterns block 16-digit card numbers, SSNs (<code>XXX-XX-XXXX</code>), passport IDs, and long numeric account numbers.</p>
+        </div>
+        <div class="sec-card">
+          <div class="sec-icon">📁</div>
+          <h4>Path Traversal Protection</h4>
+          <p>PDF uploads strip all path components from filenames using <code>pathlib.Path(name).name</code>, preventing directory traversal attacks on the uploads folder.</p>
+        </div>
+        <div class="sec-card">
+          <div class="sec-icon">📋</div>
+          <h4>Structured Audit Logging</h4>
+          <p>Every agent action, login event, guardrail trigger, and error is written to <code>audit.log</code> as a structured JSON entry with UTC timestamp for compliance traceability.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- RAG Pipeline -->
+    <section id="rag">
+      <div class="section-header">
+        <div class="section-icon" style="background:#14432940; border:1px solid #0f766e;">📚</div>
+        <div>
+          <h2>RAG Pipeline</h2>
+          <p>Hybrid search over financial documents</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>⚙️ How It Works</h3>
+        <p>The RAG (Retrieval-Augmented Generation) pipeline enables the Data Synthesis Specialist to answer precise questions about uploaded PDFs — for example, IRS Publication 560 on retirement plans.</p>
+      </div>
+
+      <div class="card">
+        <h3>Step 1 — Indexing (<code>index_financial_document</code>)</h3>
+        <ul>
+          <li>PDF is loaded from <code>uploads/</code> using the document processor.</li>
+          <li>Text is split into chunks by section, preserving tables as Markdown.</li>
+          <li>Each chunk is embedded into a vector store.</li>
+          <li>A BM25 keyword index is also built over the same chunks.</li>
+          <li>Base documents listed in <code>config.py → BASE_DOCUMENTS</code> are auto-indexed at server startup.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Step 2 — Retrieval (<code>search_financial_documents</code>)</h3>
+        <ul>
+          <li>The user query is run through both the <strong>BM25 keyword index</strong> and the <strong>vector semantic index</strong> in parallel.</li>
+          <li>Results from both are fused using <strong>Reciprocal Rank Fusion (RRF)</strong> — boosting chunks that rank highly in both methods.</li>
+          <li>Top-<em>k</em> chunks are returned to the agent alongside source document, page number, and section header.</li>
+          <li>The agent synthesises the chunks and cites sources in the final answer.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>📄 Base Documents</h3>
+        <p>
+          <code>config.py</code> contains a <code>BASE_DOCUMENTS</code> list. Any PDF filename listed here is automatically indexed when the server starts (if the file exists in <code>uploads/</code>). Currently configured:
+          <code>p560b.pdf</code> — IRS Publication 560 "Retirement Plans for Small Business".
+        </p>
+      </div>
+    </section>
+
+    <!-- Configuration -->
+    <section id="config">
+      <div class="section-header">
+        <div class="section-icon" style="background:#1e3a5f;">⚙️</div>
+        <div>
+          <h2>Configuration</h2>
+          <p>LLM models and environment variables</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>🤖 LLM Model Options (<code>config.py</code>)</h3>
+        <p>
+          Two model roles are defined: <strong>TRIAGE_MODEL</strong> (used for routing and lightweight agents)
+          and <strong>SPECIALIST_MODEL</strong> (used for complex reasoning). Both use <strong>LiteLLM</strong>
+          as a provider-agnostic wrapper — simply uncomment the desired provider block:
+        </p>
+        <ul>
+          <li><strong>Option A — Groq</strong>: <code>llama-3.1-8b-instant</code> / <code>llama-3.3-70b-versatile</code> (free tier, very fast) — requires <code>GROQ_API_KEY</code></li>
+          <li><strong>Option B — Anthropic Claude</strong>: <code>claude-haiku-3-5</code> / <code>claude-sonnet-4-5</code> — requires <code>ANTHROPIC_API_KEY</code></li>
+          <li><strong>Option C — Google Gemini</strong>: <code>gemini-2.5-flash</code> (currently active) — requires <code>GEMINI_API_KEY</code></li>
+          <li><strong>Option D — Mistral AI</strong>: <code>mistral-small-latest</code> / <code>mistral-large-latest</code> — requires <code>MISTRAL_API_KEY</code></li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>🌱 Environment Variables</h3>
+        <ul>
+          <li><code>GEMINI_API_KEY</code> (or whichever provider is active)</li>
+          <li><code>SESSION_SECRET</code> — HMAC signing key for session tokens (change in production)</li>
+          <li>Place all keys in a <code>.env</code> file — loaded automatically via <code>python-dotenv</code>.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>🔑 Runtime Model Override</h3>
+        <p>
+          Users can supply their own <code>api_key</code> and <code>model</code> string in the
+          <code>/chat</code> request body. The server builds a temporary <code>LitellmModel</code>
+          and injects it via <code>RunConfig</code>, overriding the server defaults for that request only.
+          This is exposed in the frontend's settings panel.
+        </p>
+      </div>
+    </section>
+
+    <!-- Tech Stack -->
+    <section id="stack">
+      <div class="section-header">
+        <div class="section-icon" style="background:#1e293b;">🛠️</div>
+        <div>
+          <h2>Tech Stack</h2>
+          <p>Libraries and frameworks powering the system</p>
+        </div>
+      </div>
+
+      <div class="stack-grid">
+        <div class="stack-item">
+          <div class="si-icon">🤖</div>
+          <div><div class="si-name">OpenAI Agents SDK</div><div class="si-role">Agent orchestration framework</div></div>
+        </div>
+        <div class="stack-item">
+          <div class="si-icon">⚡</div>
+          <div><div class="si-name">FastAPI + Uvicorn</div><div class="si-role">Async REST API server</div></div>
+        </div>
+        <div class="stack-item">
+          <div class="si-icon">🌐</div>
+          <div><div class="si-name">LiteLLM</div><div class="si-role">Multi-provider LLM wrapper</div></div>
+        </div>
+        <div class="stack-item">
+          <div class="si-icon">🌿</div>
+          <div><div class="si-name">python-dotenv</div><div class="si-role">Environment variable management</div></div>
+        </div>
+        <div class="stack-item">
+          <div class="si-icon">🔐</div>
+          <div><div class="si-name">bcrypt</div><div class="si-role">Password hashing</div></div>
+        </div>
+        <div class="stack-item">
+          <div class="si-icon">📄</div>
+          <div><div class="si-name">PyPDF / pdfplumber</div><div class="si-role">PDF parsing &amp; text extraction</div></div>
+        </div>
+        <div class="stack-item">
+          <div class="si-icon">🔍</div>
+          <div><div class="si-name">BM25 + Vector Store</div><div class="si-role">Hybrid document search</div></div>
+        </div>
+        <div class="stack-item">
+          <div class="si-icon">📈</div>
+          <div><div class="si-name">yfinance + fredapi</div><div class="si-role">Market &amp; economic data</div></div>
+        </div>
+        <div class="stack-item">
+          <div class="si-icon">🎨</div>
+          <div><div class="si-name">Rich</div><div class="si-role">Terminal UI for CLI mode</div></div>
+        </div>
+        <div class="stack-item">
+          <div class="si-icon">📝</div>
+          <div><div class="si-name">marked.js + DOMPurify</div><div class="si-role">Markdown rendering in browser</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Request Flow -->
+    <section id="flow">
+      <div class="section-header">
+        <div class="section-icon" style="background:#1e3a5f;">🔄</div>
+        <div>
+          <h2>Request Flow</h2>
+          <p>How a chat message travels through the system</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Web Chat Request Lifecycle</h3>
+        <div class="flow">
+          <div class="flow-node">Browser</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node primary">POST /chat<br/><small>(SSE stream)</small></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node">PII Guardrail</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node primary">Triage Agent</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node">Specialist(s)<br/><small>as tools</small></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node primary">Tool Functions</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node">SSE Response</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node">Browser</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Authentication Flow</h3>
+        <div class="flow">
+          <div class="flow-node">User enters<br/>credentials</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node primary">POST /login</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node">bcrypt verify<br/>+ rate check</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node primary">HMAC token</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node">Stored in<br/>localStorage</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node">Sent as<br/>X-Session-Token</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Account Identity Injection</h3>
+        <p>
+          After authentication, the server decodes the session token to extract the <code>account_id</code>.
+          It then prepends a <code>system</code> message into the conversation with this ID before
+          calling the triage agent. This means <strong>no agent ever needs to ask the user for their
+          account number</strong> — it is always injected automatically and securely.
+        </p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  Banking AI Multi-Agent System &mdash; Project Documentation &mdash; Built with OpenAI Agents SDK + FastAPI
+</footer>
+
+<script>
+  // Highlight active TOC link on scroll
+  const sections = document.querySelectorAll('section[id], div[id]');
+  const tocLinks = document.querySelectorAll('.toc-link');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        tocLinks.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.toc-link[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>
