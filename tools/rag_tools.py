@@ -37,27 +37,15 @@ _engine = HybridSearchEngine(embedding_model="all-MiniLM-L6-v2")
 _indexed_docs: set[str] = set()   # tracks which filenames have been indexed
 
 
-# ── Tools ─────────────────────────────────────────────────────────────────────
+# ── Core indexing logic (callable directly, not wrapped as a tool) ────────────
 
 
-@function_tool
-def index_financial_document(filename: str) -> dict:
+def _do_index(filename: str) -> dict:
     """
-    Parse and index a financial PDF document for hybrid retrieval.
-
-    This tool performs three steps:
-    1. **Structured parsing** — extracts text using PyMuPDF and detects section
-       headings via font-size heuristics (not fixed-size character windows).
-    2. **Table preservation** — detects tabular regions and converts them to
-       Markdown format so their structure is retained in the embedding.
-    3. **Dual indexing** — builds a BM25 index for keyword recall and a dense
-       vector index (sentence-transformers) for semantic recall.
-
-    Call this tool *before* using search_financial_documents on a new file.
-    Pass only the filename (e.g. 'annual_report.pdf'), not a full path.
+    Parse and index a PDF.  Used by both the @function_tool below and by the
+    server startup routine (which cannot call @function_tool objects directly).
+    Returns the same dict structure in all cases.
     """
-    log_event("DataAgent", "index_financial_document", {"filename": filename})
-
     safe_name = pathlib.Path(filename).name
 
     if safe_name in _indexed_docs:
@@ -115,6 +103,29 @@ def index_financial_document(filename: str) -> dict:
             "You can now call search_financial_documents to query it."
         ),
     }
+
+
+# ── Tools ─────────────────────────────────────────────────────────────────────
+
+
+@function_tool
+def index_financial_document(filename: str) -> dict:
+    """
+    Parse and index a financial PDF document for hybrid retrieval.
+
+    This tool performs three steps:
+    1. **Structured parsing** — extracts text using PyMuPDF and detects section
+       headings via font-size heuristics (not fixed-size character windows).
+    2. **Table preservation** — detects tabular regions and converts them to
+       Markdown format so their structure is retained in the embedding.
+    3. **Dual indexing** — builds a BM25 index for keyword recall and a dense
+       vector index (sentence-transformers) for semantic recall.
+
+    Call this tool *before* using search_financial_documents on a new file.
+    Pass only the filename (e.g. 'annual_report.pdf'), not a full path.
+    """
+    log_event("DataAgent", "index_financial_document", {"filename": filename})
+    return _do_index(filename)
 
 
 @function_tool
