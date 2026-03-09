@@ -4,6 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Banking AI Assistant</title>
+
+  <!-- Markdown rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js"></script>
+
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -140,6 +147,115 @@
       border-bottom-left-radius: 4px;
       border: 1px solid #2d3748;
     }
+
+    /* ── Markdown rendering inside bot bubbles ── */
+    .bubble.md > :first-child { margin-top: 0; }
+    .bubble.md > :last-child  { margin-bottom: 0; }
+
+    .bubble.md p { margin: 0 0 .75em; line-height: 1.65; }
+    .bubble.md p:last-child { margin-bottom: 0; }
+
+    .bubble.md h1, .bubble.md h2, .bubble.md h3,
+    .bubble.md h4, .bubble.md h5, .bubble.md h6 {
+      color: #f1f5f9;
+      font-weight: 700;
+      line-height: 1.3;
+      margin: 1em 0 .4em;
+    }
+    .bubble.md h1 { font-size: 1.15em; border-bottom: 1px solid #2d3748; padding-bottom: .3em; }
+    .bubble.md h2 { font-size: 1.05em; border-bottom: 1px solid #1e2535; padding-bottom: .2em; }
+    .bubble.md h3 { font-size: .97em; }
+
+    .bubble.md ul, .bubble.md ol {
+      padding-left: 1.4em;
+      margin: .4em 0 .75em;
+    }
+    .bubble.md li { margin: .25em 0; line-height: 1.6; }
+    .bubble.md li > ul, .bubble.md li > ol { margin: .2em 0; }
+
+    .bubble.md strong { color: #f1f5f9; font-weight: 600; }
+    .bubble.md em     { color: #cbd5e1; }
+
+    .bubble.md a {
+      color: #60a5fa;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .bubble.md a:hover { color: #93c5fd; }
+
+    .bubble.md blockquote {
+      border-left: 3px solid #3b82f6;
+      padding: .4em .8em;
+      margin: .5em 0;
+      background: #0f172a;
+      border-radius: 0 6px 6px 0;
+      color: #94a3b8;
+    }
+
+    .bubble.md hr {
+      border: none;
+      border-top: 1px solid #2d3748;
+      margin: .8em 0;
+    }
+
+    /* Inline code */
+    .bubble.md code:not(pre code) {
+      background: #0f172a;
+      border: 1px solid #1e2535;
+      color: #7dd3fc;
+      padding: .15em .45em;
+      border-radius: 5px;
+      font-size: .875em;
+      font-family: "Fira Code", "Cascadia Code", Consolas, monospace;
+    }
+
+    /* Code blocks */
+    .bubble.md pre {
+      background: #0d1117;
+      border: 1px solid #1e2535;
+      border-radius: 8px;
+      padding: .9em 1em;
+      overflow-x: auto;
+      margin: .6em 0;
+      font-size: .835em;
+      line-height: 1.55;
+    }
+    .bubble.md pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      color: inherit;
+      font-size: inherit;
+      font-family: "Fira Code", "Cascadia Code", Consolas, monospace;
+    }
+    /* hljs dark override to blend with our dark theme */
+    .bubble.md pre .hljs { background: transparent; padding: 0; }
+
+    /* Tables */
+    .bubble.md table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .88em;
+      margin: .6em 0;
+      overflow: hidden;
+      border-radius: 8px;
+    }
+    .bubble.md th {
+      background: #1e3a5f;
+      color: #bfdbfe;
+      font-weight: 600;
+      text-align: left;
+      padding: 8px 12px;
+      border-bottom: 1px solid #2d4a7a;
+    }
+    .bubble.md td {
+      padding: 7px 12px;
+      border-bottom: 1px solid #1e2535;
+      color: #cbd5e1;
+      vertical-align: top;
+    }
+    .bubble.md tr:last-child td { border-bottom: none; }
+    .bubble.md tr:hover td { background: #182030; }
 
     .msg.error .bubble {
       background: #3b0a0a;
@@ -389,9 +505,352 @@
     }
     #logout-btn.visible { display: block; }
     #logout-btn:hover { background: #1e293b; color: #f1f5f9; }
+
+    /* ── Document Library button in header ── */
+    #docs-btn {
+      margin-left: 8px;
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      border: 1px solid #2d3748;
+      background: transparent;
+      color: #64748b;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      font-size: 15px;
+      line-height: 1;
+      transition: background .15s, color .15s, border-color .15s;
+    }
+    #docs-btn:hover { background: #1e293b; color: #94a3b8; border-color: #3b82f6; }
+
+    /* ── Document Library slide-in panel ── */
+    #doc-panel-overlay {
+      position: fixed;
+      inset: 0;
+      background: #00000050;
+      z-index: 899;
+      display: none;
+    }
+    #doc-panel-overlay.visible { display: block; }
+
+    #doc-panel {
+      position: fixed;
+      top: 0; right: -390px;
+      width: 370px;
+      height: 100%;
+      background: #111827;
+      border-left: 1px solid #1e2535;
+      z-index: 900;
+      display: flex;
+      flex-direction: column;
+      transition: right .28s ease;
+      box-shadow: -10px 0 40px #00000070;
+    }
+    #doc-panel.open { right: 0; }
+
+    .doc-panel-header {
+      padding: 18px 18px 14px;
+      border-bottom: 1px solid #1e2535;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .doc-panel-header h2 { font-size: 14px; font-weight: 700; color: #f1f5f9; }
+    .doc-panel-close {
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      border: 1px solid #2d3748;
+      background: transparent;
+      color: #64748b;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      transition: background .15s, color .15s;
+    }
+    .doc-panel-close:hover { background: #1e293b; color: #f1f5f9; }
+
+    .doc-panel-upload {
+      padding: 12px 16px 0;
+    }
+    .doc-upload-btn {
+      width: 100%;
+      padding: 10px;
+      background: transparent;
+      border: 1px dashed #334155;
+      border-radius: 10px;
+      color: #64748b;
+      cursor: pointer;
+      font-size: 13px;
+      font-family: inherit;
+      transition: background .15s, border-color .15s, color .15s;
+    }
+    .doc-upload-btn:hover { background: #182030; border-color: #3b82f6; color: #94a3b8; }
+
+    #doc-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px 16px 16px;
+    }
+    #doc-list::-webkit-scrollbar { width: 4px; }
+    #doc-list::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 4px; }
+
+    .doc-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      padding: 14px 0 6px;
+    }
+    .doc-card {
+      background: #1e293b;
+      border: 1px solid #2d3748;
+      border-radius: 10px;
+      padding: 11px 13px;
+      margin-bottom: 8px;
+    }
+    .doc-card-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .doc-name {
+      font-size: 13px;
+      color: #e2e8f0;
+      font-weight: 500;
+      word-break: break-all;
+    }
+    .doc-size {
+      font-size: 11px;
+      color: #475569;
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+    .doc-card-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .doc-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .doc-badge.indexed  { background: #052e16; color: #4ade80; border: 1px solid #14532d; }
+    .doc-badge.pending  { background: #1c1917; color: #78716c; border: 1px solid #292524; }
+    .doc-idx-btn {
+      padding: 4px 10px;
+      background: #1d4ed8;
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .doc-idx-btn:hover { background: #1e40af; }
+    .doc-idx-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .doc-ask-btn {
+      margin-left: auto;
+      padding: 4px 10px;
+      background: transparent;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      color: #94a3b8;
+      font-size: 11px;
+      cursor: pointer;
+      transition: background .15s, color .15s, border-color .15s;
+    }
+    .doc-ask-btn:hover { background: #1e293b; color: #f1f5f9; border-color: #3b82f6; }
+    .doc-loading, .doc-empty {
+      font-size: 13px;
+      color: #475569;
+      text-align: center;
+      padding: 20px 0;
+    }
+    .doc-error { font-size: 13px; color: #f87171; text-align: center; padding: 20px 0; }
+
+    /* ── Settings button ── */
+    #settings-btn {
+      margin-left: 8px;
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      border: 1px solid #2d3748;
+      background: transparent;
+      color: #64748b;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background .15s, color .15s, border-color .15s;
+      position: relative;
+    }
+    #settings-btn:hover { background: #1e293b; color: #94a3b8; border-color: #3b82f6; }
+    #settings-btn svg { width: 15px; height: 15px; }
+    /* Green dot when custom key is active */
+    #settings-btn .key-dot {
+      position: absolute;
+      top: 4px; right: 4px;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 4px #22c55e88;
+      display: none;
+    }
+    #settings-btn .key-dot.active { display: block; }
+
+    /* ── Settings modal backdrop ── */
+    #settings-modal {
+      position: fixed;
+      inset: 0;
+      background: #00000080;
+      z-index: 950;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    #settings-modal.visible { display: flex; }
+
+    .settings-card {
+      background: #1e293b;
+      border: 1px solid #2d3748;
+      border-radius: 20px;
+      padding: 32px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 24px 64px #00000080;
+    }
+    .settings-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .settings-header h2 { font-size: 16px; font-weight: 700; color: #f1f5f9; }
+    .settings-close {
+      cursor: pointer;
+      color: #64748b;
+      font-size: 20px;
+      line-height: 1;
+      padding: 2px 6px;
+      border-radius: 6px;
+      transition: color .15s, background .15s;
+    }
+    .settings-close:hover { color: #f1f5f9; background: #334155; }
+    .settings-desc {
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    .settings-select {
+      width: 100%;
+      background: #0f1117;
+      border: 1px solid #2d3748;
+      border-radius: 10px;
+      padding: 11px 14px;
+      color: #f1f5f9;
+      font-size: 14px;
+      outline: none;
+      font-family: inherit;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .settings-select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px #3b82f620; }
+    #settings-save-btn {
+      width: 100%;
+      padding: 11px;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background .15s, transform .1s;
+    }
+    #settings-save-btn:hover { background: #1d4ed8; }
+    #settings-save-btn:active { transform: scale(.98); }
+    #settings-clear-btn {
+      width: 100%;
+      margin-top: 8px;
+      padding: 10px;
+      background: transparent;
+      border: 1px solid #2d3748;
+      border-radius: 10px;
+      color: #94a3b8;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+    #settings-clear-btn:hover { background: #1e293b; color: #f1f5f9; }
+    #settings-status {
+      font-size: 12px;
+      text-align: center;
+      color: #22c55e;
+      margin-top: 10px;
+      min-height: 18px;
+    }
   </style>
 </head>
 <body>
+
+<!-- Document Library overlay + panel -->
+<div id="doc-panel-overlay" onclick="closeDocLib()"></div>
+<div id="doc-panel">
+  <div class="doc-panel-header">
+    <h2>&#128218; Document Library</h2>
+    <button class="doc-panel-close" onclick="closeDocLib()">&#x2715;</button>
+  </div>
+  <div class="doc-panel-upload">
+    <label class="doc-upload-btn">
+      <input type="file" id="doc-panel-file-input" accept=".pdf" style="display:none" />
+      &#43; Upload New PDF
+    </label>
+  </div>
+  <div id="doc-list"><p class="doc-loading">Loading&#8230;</p></div>
+</div>
+
+<!-- Settings modal -->
+<div id="settings-modal">
+  <div class="settings-card">
+    <div class="settings-header">
+      <h2>&#9881;&#65039; API Key Settings</h2>
+      <span class="settings-close" onclick="closeSettings()">&#x2715;</span>
+    </div>
+    <p class="settings-desc">
+      Provide your own API key to use instead of the server default.
+      Your key is stored only in your browser and sent directly with each request.
+    </p>
+    <div class="login-field">
+      <label for="settings-provider">Provider &amp; Model</label>
+      <select id="settings-provider" class="settings-select">
+        <option value="">&#8212; Use server default &#8212;</option>
+        <option value="gemini/gemini-2.5-flash">Google Gemini &#8212; gemini-2.5-flash</option>
+        <option value="gemini/gemini-2.0-flash">Google Gemini &#8212; gemini-2.0-flash</option>
+        <option value="gpt-4o">OpenAI &#8212; gpt-4o</option>
+        <option value="gpt-4o-mini">OpenAI &#8212; gpt-4o-mini</option>
+        <option value="groq/llama-3.3-70b-versatile">Groq &#8212; llama-3.3-70b-versatile</option>
+        <option value="groq/llama-3.1-8b-instant">Groq &#8212; llama-3.1-8b-instant</option>
+        <option value="anthropic/claude-sonnet-4-5">Anthropic &#8212; claude-sonnet-4-5</option>
+        <option value="anthropic/claude-haiku-3-5">Anthropic &#8212; claude-haiku-3-5</option>
+        <option value="mistral/mistral-large-latest">Mistral &#8212; mistral-large-latest</option>
+        <option value="mistral/mistral-small-latest">Mistral &#8212; mistral-small-latest</option>
+      </select>
+    </div>
+    <div class="login-field">
+      <label for="settings-apikey">API Key</label>
+      <input type="password" id="settings-apikey" class="" placeholder="Paste your API key here"
+             style="width:100%;background:#0f1117;border:1px solid #2d3748;border-radius:10px;padding:11px 14px;color:#f1f5f9;font-size:14px;outline:none;font-family:inherit;transition:border-color .2s,box-shadow .2s;" />
+    </div>
+    <button id="settings-save-btn" onclick="saveSettings()">Save &amp; Apply</button>
+    <button id="settings-clear-btn" onclick="clearSettings()">Clear &#8212; revert to server default</button>
+    <p id="settings-status"></p>
+  </div>
+</div>
 
 <!-- Login overlay -->
 <div id="login-overlay">
@@ -433,6 +892,14 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M18.36 6.64a9 9 0 1 1-12.73 0"/>
       <line x1="12" y1="2" x2="12" y2="12"/>
+    </svg>
+  </button>
+  <button id="docs-btn" title="Document Library" onclick="openDocLib()">&#128218;</button>
+  <button id="settings-btn" title="API Key Settings" onclick="openSettings()">
+    <span class="key-dot" id="key-dot"></span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
     </svg>
   </button>
   <button id="logout-btn" onclick="logoutUser()" title="Sign out">→ Sign Out</button>
@@ -483,15 +950,114 @@
   const attachLabel = document.getElementById("attach-label");
   const pdfInput    = document.getElementById("pdf-file-input");
 
-  // ── PDF upload ──
-  pdfInput.addEventListener("change", () => uploadPDF(pdfInput));
+  // ── Markdown renderer ──
+  marked.use({
+    gfm: true,
+    breaks: true,
+    highlight: null,  // handled manually below
+  });
+  const _renderer = new marked.Renderer();
+  _renderer.code = ({ text, lang }) => {
+    const language = lang && hljs.getLanguage(lang) ? lang : "plaintext";
+    const highlighted = hljs.highlight(text, { language }).value;
+    return `<pre><code class="hljs language-${language}">${highlighted}</code></pre>`;
+  };
+  marked.use({ renderer: _renderer });
 
-  async function uploadPDF(input) {
+  function renderMd(text) {
+    // DOMPurify prevents XSS; allow safe HTML tags produced by marked
+    return DOMPurify.sanitize(marked.parse(text), {
+      USE_PROFILES: { html: true },
+      ADD_ATTR: ["class"],   // keep hljs class names
+    });
+  }
+
+  // ── API Key settings (persisted in localStorage) ──
+  let userApiKey = localStorage.getItem("user_api_key") || null;
+  let userModel  = localStorage.getItem("user_model")   || null;
+
+  function _syncKeyDot() {
+    const dot = document.getElementById("key-dot");
+    if (dot) dot.classList.toggle("active", !!(userApiKey && userModel));
+  }
+  _syncKeyDot();
+
+  function openSettings() {
+    const modal = document.getElementById("settings-modal");
+    modal.classList.add("visible");
+    document.getElementById("settings-provider").value = userModel  || "";
+    document.getElementById("settings-apikey").value   = userApiKey || "";
+    document.getElementById("settings-status").textContent = "";
+  }
+
+  function closeSettings() {
+    document.getElementById("settings-modal").classList.remove("visible");
+  }
+
+  function saveSettings() {
+    const model  = document.getElementById("settings-provider").value.trim();
+    const apiKey = document.getElementById("settings-apikey").value.trim();
+    if (!model || !apiKey) {
+      document.getElementById("settings-status").style.color = "#f87171";
+      document.getElementById("settings-status").textContent =
+        model || apiKey ? "Please fill in both Provider and API Key." : "Nothing to save.";
+      return;
+    }
+    userModel  = model;
+    userApiKey = apiKey;
+    localStorage.setItem("user_model",   model);
+    localStorage.setItem("user_api_key", apiKey);
+    _syncKeyDot();
+    document.getElementById("settings-status").style.color = "#22c55e";
+    document.getElementById("settings-status").textContent = "✅ Saved! Your key will be used for all requests.";
+    setTimeout(closeSettings, 1400);
+  }
+
+  function clearSettings() {
+    userApiKey = null;
+    userModel  = null;
+    localStorage.removeItem("user_api_key");
+    localStorage.removeItem("user_model");
+    document.getElementById("settings-provider").value = "";
+    document.getElementById("settings-apikey").value   = "";
+    _syncKeyDot();
+    document.getElementById("settings-status").style.color = "#22c55e";
+    document.getElementById("settings-status").textContent = "✅ Cleared — using server default.";
+    setTimeout(closeSettings, 1400);
+  }
+
+  // Close settings modal on backdrop click
+  document.getElementById("settings-modal").addEventListener("click", (e) => {
+    if (e.target === document.getElementById("settings-modal")) closeSettings();
+  });
+
+  // Focus style for settings API key input
+  document.getElementById("settings-apikey").addEventListener("focus", function () {
+    this.style.borderColor = "#3b82f6";
+    this.style.boxShadow   = "0 0 0 3px #3b82f620";
+  });
+  document.getElementById("settings-apikey").addEventListener("blur", function () {
+    this.style.borderColor = "";
+    this.style.boxShadow   = "";
+  });
+
+  // ── PDF upload (paperclip button in chat bar) ──
+  pdfInput.addEventListener("change", () => uploadAndIndexPDF(pdfInput, attachLabel));
+
+  // PDF upload triggered from Document Library panel
+  document.getElementById("doc-panel-file-input").addEventListener("change", function () {
+    uploadAndIndexPDF(this, null);
+  });
+
+  async function uploadAndIndexPDF(input, spinnerEl) {
     const file = input.files[0];
     if (!file) return;
-    attachLabel.classList.add("uploading");
+    if (spinnerEl) spinnerEl.classList.add("uploading");
+
+    // Step 1 — upload file
     const formData = new FormData();
     formData.append("file", file);
+    let uploadedName = null;
     try {
       const resp = await fetch("/upload-pdf", {
         method: "POST",
@@ -500,20 +1066,172 @@
       });
       const data = await resp.json();
       if (!resp.ok) {
-        appendMessage("bot", `❌ PDF upload failed: ${data.detail}`, null, true);
+        appendMessage("bot", `\u274c PDF upload failed: ${data.detail}`, "System", true);
         return;
       }
-      // Auto-fill the input and send a message asking the agent to analyze the PDF
-      inputEl.value = `Please analyze the uploaded PDF document: ${data.filename}`;
-      inputEl.style.height = "auto";
-      inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + "px";
-      sendMessage();
+      uploadedName = data.filename;
     } catch {
-      appendMessage("bot", "❌ PDF upload failed. Please try again.", null, true);
+      appendMessage("bot", "\u274c PDF upload failed. Please try again.", "System", true);
+      return;
     } finally {
-      input.value = "";  // reset so the same file can be re-selected
-      attachLabel.classList.remove("uploading");
+      input.value = "";
+      if (spinnerEl) spinnerEl.classList.remove("uploading");
     }
+
+    // Step 2 — auto-index for hybrid RAG search
+    appendMessage(
+      "bot",
+      `\u23f3 Indexing \u201c${uploadedName}\u201d for smart search\u2026`,
+      "Data Specialist",
+    );
+    try {
+      const iResp = await fetch("/index-document", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Session-Token": sessionToken || "",
+        },
+        body: JSON.stringify({ filename: uploadedName }),
+      });
+      const iData = await iResp.json();
+
+      if (!iResp.ok || iData.error) {
+        appendMessage(
+          "bot",
+          `\u274c Indexing failed: ${iData.error || iData.detail}`,
+          "Data Specialist",
+          true,
+        );
+        return;
+      }
+
+      const alreadyDone = iData.status === "already_indexed";
+      const sectionsNote = !alreadyDone && iData.sections_detected && iData.sections_detected.length
+        ? `\n\nDetected sections: ${iData.sections_detected.slice(0, 5).map(s => `\u201c${s}\u201d`).join(", ")}${iData.sections_detected.length > 5 ? " \u2026" : ""}.`
+        : "";
+
+      appendMessage(
+        "bot",
+        alreadyDone
+          ? `\u2139\ufe0f \u201c${uploadedName}\u201d was already indexed. You can ask me questions about it directly.`
+          : `\u2705 \u201c${uploadedName}\u201d indexed successfully \u2014 ${iData.text_chunks} text sections, ${iData.table_chunks} tables.${sectionsNote}\n\nYou can now ask any specific question about this document.`,
+        "Data Specialist",
+      );
+
+      // Refresh library if open
+      if (document.getElementById("doc-panel").classList.contains("open")) {
+        loadDocuments();
+      }
+    } catch {
+      appendMessage("bot", "\u274c Indexing failed. Please try again.", "Data Specialist", true);
+    }
+  }
+
+  // ── Document Library ──
+  function openDocLib() {
+    document.getElementById("doc-panel").classList.add("open");
+    document.getElementById("doc-panel-overlay").classList.add("visible");
+    loadDocuments();
+  }
+
+  function closeDocLib() {
+    document.getElementById("doc-panel").classList.remove("open");
+    document.getElementById("doc-panel-overlay").classList.remove("visible");
+  }
+
+  async function loadDocuments() {
+    const container = document.getElementById("doc-list");
+    container.innerHTML = '<p class="doc-loading">Loading\u2026</p>';
+    try {
+      const resp = await fetch("/documents", {
+        headers: { "X-Session-Token": sessionToken || "" },
+      });
+      if (!resp.ok) {
+        container.innerHTML = '<p class="doc-error">Failed to load documents.</p>';
+        return;
+      }
+      const data = await resp.json();
+      renderDocuments(data.documents);
+    } catch {
+      container.innerHTML = '<p class="doc-error">Connection error.</p>';
+    }
+  }
+
+  function renderDocuments(docs) {
+    const container = document.getElementById("doc-list");
+    if (!docs.length) {
+      container.innerHTML = '<p class="doc-empty">No documents yet.<br>Upload a PDF to get started.</p>';
+      return;
+    }
+    const base = docs.filter(d => d.is_base);
+    const user = docs.filter(d => !d.is_base);
+    let html = "";
+    if (base.length) {
+      html += '<div class="doc-section-title">&#128203; Base Compliance Documents</div>';
+      base.forEach(d => { html += docCardHTML(d); });
+    }
+    html += '<div class="doc-section-title">&#128193; Your Uploaded Documents</div>';
+    if (user.length) {
+      user.forEach(d => { html += docCardHTML(d); });
+    } else {
+      html += '<p class="doc-empty" style="text-align:left;padding:6px 0">None yet.</p>';
+    }
+    container.innerHTML = html;
+  }
+
+  function docCardHTML(d) {
+    const idSafe = d.filename.replace(/\./g, "_");
+    const badge = d.indexed
+      ? '<span class="doc-badge indexed">\u2713 Indexed</span>'
+      : '<span class="doc-badge pending">Not indexed</span>';
+    const idxBtn = !d.indexed
+      ? `<button class="doc-idx-btn" id="idxbtn-${idSafe}" onclick="indexDocFromLib('${d.filename}')">Index</button>`
+      : "";
+    return `
+      <div class="doc-card">
+        <div class="doc-card-info">
+          <span class="doc-name">&#128196; ${d.filename}</span>
+          <span class="doc-size">${d.size_kb} KB</span>
+        </div>
+        <div class="doc-card-actions">
+          ${badge}${idxBtn}
+          <button class="doc-ask-btn" onclick="askAboutDoc('${d.filename}')">Ask &#8594;</button>
+        </div>
+      </div>`;
+  }
+
+  async function indexDocFromLib(filename) {
+    const idSafe = filename.replace(/\./g, "_");
+    const btn = document.getElementById("idxbtn-" + idSafe);
+    if (btn) { btn.textContent = "Indexing\u2026"; btn.disabled = true; }
+    try {
+      const resp = await fetch("/index-document", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Session-Token": sessionToken || "",
+        },
+        body: JSON.stringify({ filename }),
+      });
+      const data = await resp.json();
+      if (data.status === "indexed" || data.status === "already_indexed") {
+        loadDocuments();
+      } else {
+        if (btn) { btn.textContent = "Failed"; btn.disabled = false; }
+      }
+    } catch {
+      if (btn) { btn.textContent = "Error"; btn.disabled = false; }
+    }
+  }
+
+  function askAboutDoc(filename) {
+    closeDocLib();
+    inputEl.value = `In the document \u201c${filename}\u201d, `;
+    inputEl.style.height = "auto";
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + "px";
+    inputEl.focus();
+    const len = inputEl.value.length;
+    inputEl.setSelectionRange(len, len);
   }
 
   let history = [];          // [{role, content}]
@@ -662,8 +1380,13 @@
     }
 
     const bubble = document.createElement("div");
-    bubble.className = "bubble";
-    bubble.textContent = content;
+    if (role === "user") {
+      bubble.className = "bubble";
+      bubble.textContent = content;
+    } else {
+      bubble.className = "bubble md";
+      bubble.innerHTML = renderMd(content);
+    }
 
     inner.appendChild(bubble);
     wrapper.appendChild(avatar);
@@ -726,7 +1449,11 @@
           "Content-Type": "application/json",
           "X-Session-Token": sessionToken || "",
         },
-        body: JSON.stringify({ message: text, history: history.slice(0, -1) }),
+        body: JSON.stringify({
+          message: text,
+          history: history.slice(0, -1),
+          ...(userApiKey && userModel ? { api_key: userApiKey, model: userModel } : {}),
+        }),
       });
 
       if (res.status === 401) { await logoutUser(); return; }
@@ -762,7 +1489,7 @@
             botBubble = appendMessage("bot", parsed.content, agentName, isErr);
             if (!isErr) history.push({ role: "assistant", content: parsed.content });
           } else {
-            botBubble.textContent = parsed.content;
+            botBubble.innerHTML = renderMd(parsed.content);
             scrollToBottom();
           }
         }

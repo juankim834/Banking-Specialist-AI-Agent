@@ -24,3 +24,14 @@ SPECIALIST_MODEL = LitellmModel(model="gemini/gemini-2.5-flash",api_key=os.geten
 # Option D: Mistral AI (EU-based, open-weight)
 # TRIAGE_MODEL    = LitellmModel(model="mistral/mistral-small-latest",       api_key=os.getenv("MISTRAL_API_KEY"))
 # SPECIALIST_MODEL = LitellmModel(model="mistral/mistral-large-latest",      api_key=os.getenv("MISTRAL_API_KEY"))
+
+# ── Base compliance / reference documents ─────────────────────────────────────
+# PDFs listed here are automatically indexed at server startup from the
+# uploads/ directory.  Add any regulatory or policy PDFs you want the agent
+# to always have available for hybrid RAG search.
+#
+# p560b.pdf → IRS Publication 560 "Retirement Plans for Small Business"
+#             (SEP, SIMPLE, and Qualified Plans) — excellent compliance base.
+BASE_DOCUMENTS: list[str] = [
+    "p560b.pdf",
+]

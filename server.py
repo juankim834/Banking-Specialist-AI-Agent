@@ -13,10 +13,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from agents import Runner, InputGuardrailTripwireTriggered
+from agents import Runner, InputGuardrailTripwireTriggered, RunConfig
+from agents.extensions.models.litellm_model import LitellmModel
 from banking_agents.triage_agent import triage_agent
 from guardrails.pii_guardrail import pii_guardrail
 from tools.account_tools import _verify_credentials
+from tools.rag_tools import _do_index as _rag_index, _indexed_docs as _rag_indexed_docs
+from config import BASE_DOCUMENTS
 from utils.audit_logger import log_event
 
 # Attach PII guardrail
@@ -70,6 +73,36 @@ class LoginRequest(BaseModel):
 class ChatRequest(BaseModel):
     message: str
     history: list[dict] = []
+    api_key: str | None = None   # user-supplied API key (optional)
+    model: str | None = None     # LiteLLM model string, e.g. "gemini/gemini-2.5-flash"
+
+
+class IndexDocumentRequest(BaseModel):
+    filename: str
+
+
+@app.on_event("startup")
+async def auto_index_base_documents():
+    """Auto-index base compliance documents at server startup."""
+    for filename in BASE_DOCUMENTS:
+        safe_name = pathlib.Path(filename).name
+        pdf_path = UPLOAD_DIR / safe_name
+        if pdf_path.exists() and safe_name not in _rag_indexed_docs:
+            try:
+                result = _rag_index(safe_name)
+                if result.get("status") == "indexed":
+                    log_event("System", "base_doc_indexed", {
+                        "filename": safe_name,
+                        "chunks": result.get("total_chunks"),
+                    })
+                else:
+                    log_event("System", "base_doc_index_skip", {
+                        "filename": safe_name, "result": result,
+                    })
+            except Exception as exc:
+                log_event("System", "base_doc_index_error", {
+                    "filename": safe_name, "error": str(exc),
+                })
 
 
 @app.get("/")
@@ -123,21 +156,76 @@ async def upload_pdf(file: UploadFile = File(...), x_session_token: str = Header
     return {"filename": safe_name, "message": f"PDF '{safe_name}' uploaded successfully."}
 
 
+@app.get("/documents")
+async def list_documents(x_session_token: str = Header(None)):
+    """List all PDF files in uploads/ with their RAG index status."""
+    if not x_session_token or not _decode_token(x_session_token):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    docs = []
+    for p in sorted(UPLOAD_DIR.glob("*.pdf")):
+        docs.append({
+            "filename": p.name,
+            "indexed": p.name in _rag_indexed_docs,
+            "is_base": p.name in BASE_DOCUMENTS,
+            "size_kb": round(p.stat().st_size / 1024, 1),
+        })
+    return {"documents": docs}
+
+
+@app.post("/index-document")
+async def index_document(
+    req: IndexDocumentRequest,
+    x_session_token: str = Header(None),
+):
+    """Index an already-uploaded PDF for hybrid BM25 + vector RAG search."""
+    if not x_session_token or not _decode_token(x_session_token):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    safe_name = pathlib.Path(req.filename).name
+    if not (UPLOAD_DIR / safe_name).exists():
+        raise HTTPException(
+            status_code=404,
+            detail=f"'{safe_name}' not found. Please upload it first.",
+        )
+    result = _rag_index(safe_name)
+    log_event(
+        "DataSynthesis", "document_indexed",
+        {"filename": safe_name, "status": result.get("status")},
+    )
+    return result
+
+
 @app.post("/chat")
 async def chat(req: ChatRequest, x_session_token: str = Header(None)):
     """Stream the agent response as Server-Sent Events. Requires a valid session token."""
-    if not x_session_token or not _decode_token(x_session_token):
+    account_id = _decode_token(x_session_token) if x_session_token else None
+    if not account_id:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
     async def event_stream():
-        conversation = list(req.history)
+        # Inject the authenticated account_id so agents never need to ask for it
+        system_msg = {
+            "role": "system",
+            "content": (
+                f"The authenticated customer's account ID is '{account_id}'. "
+                "For every tool that requires an account_id or customer_id, use this value directly. "
+                "Never ask the user for their account ID or customer ID."
+            ),
+        }
+        conversation = [system_msg] + list(req.history)
         conversation.append({"role": "user", "content": req.message})
         log_event("TriageOrchestrator", "user_message", {"message": req.message})
+
+        # Build optional RunConfig if the user supplied their own API key
+        run_config = None
+        if req.api_key and req.model:
+            custom_model = LitellmModel(model=req.model, api_key=req.api_key)
+            run_config = RunConfig(model=custom_model)
 
         try:
             result = await Runner.run(
                 starting_agent=triage_agent,
                 input=conversation,
+                run_config=run_config,
             )
 
             response_text = result.final_output
@@ -189,4 +277,4 @@ async def shutdown():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("server:app", host="localhost", port=8000, reload=True)
+    uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=True)
