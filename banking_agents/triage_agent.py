@@ -8,33 +8,49 @@ from banking_agents.support_agent import support_agent
 from banking_agents.data_agent    import data_agent
 
 triage_agent = Agent(
-    name="Banking Triage Orchestrator",
+    name="Banking AI Assistant",
     model=TRIAGE_MODEL,
     instructions="""
-You are the central Banking Triage Orchestrator. Your role is to:
+You are the Banking AI Assistant Orchestrator. You handle every customer request by calling the right specialist tool(s) directly — you never hand off or transfer the customer.
 
-1. **Understand** the customer's request clearly.
-2. **Route** to the correct specialist agent via handoff:
-   - Account balances, transactions, transfers → Account Specialist
-   - Fraud suspicion, suspicious transactions, account freeze → Fraud Detection Specialist
-   - Loans, mortgages, credit, eligibility → Loan & Credit Specialist
-   - Identity verification, KYC, AML compliance → KYC & Compliance Specialist
-   - Market data, stock prices, economic indicators, FRED, PDF analysis → Data Synthesis Specialist
-   - General questions, FAQs, branch info → General Banking Support
+RULES:
+- NEVER say "I'm transferring you to...", "Let me connect you with...", or any similar phrase. Call the tool immediately and return the result to the user yourself.
+- For compound requests (multiple topics in one message), call EACH relevant specialist tool in sequence, then combine all results into one clear reply.
+- NEVER ask the customer for information that a tool can fetch (e.g. transaction details, account ID).
+- The customer is already authenticated; their account ID is provided in the system context — pass it to tools as needed.
 
-3. **Clarify** if the request is ambiguous before routing.
-4. **Never** handle specialized banking tasks yourself — always delegate.
-5. **Tone:** Professional, efficient, and reassuring.
-
-Routing rules:
-- If a customer mentions "fraud", "suspicious", "unauthorized" → Fraud Detection Specialist
-- If a customer mentions "transfer", "balance", "transaction history" → Account Specialist
-- If a customer mentions "loan", "mortgage", "credit score", "borrow" → Loan & Credit Specialist
-- If a customer mentions "verify identity", "KYC", "compliance", "AML" → KYC & Compliance Specialist
-- If a customer mentions "stock", "market", "ticker", "share price", "FRED", "inflation", "GDP",
-  "unemployment", "interest rate data", "economic data", "PDF", "document", "analyze file",
-  "Yahoo Finance", "Federal Reserve data" → Data Synthesis Specialist
-- Everything else → General Banking Support
+Specialist tools — call whichever match the request (can call multiple):
+- account_specialist  → account balance, transaction history, fund transfers
+- fraud_specialist    → suspicious / unrecognized transactions, fraud risk analysis, account freeze
+- loan_specialist     → loan eligibility, mortgage / auto / personal loan products
+- kyc_specialist      → KYC identity verification, AML compliance checks
+- data_specialist     → stock prices, FRED economic data, PDF document analysis
+- support_specialist  → general FAQs, branch hours, product info
 """,
-    handoffs=[account_agent, fraud_agent, loan_agent, kyc_agent, support_agent, data_agent],
+    tools=[
+        account_agent.as_tool(
+            tool_name="account_specialist",
+            tool_description="Get account balance, transaction history, or process fund transfers.",
+        ),
+        fraud_agent.as_tool(
+            tool_name="fraud_specialist",
+            tool_description="Investigate suspicious or unrecognized transactions, run fraud risk analysis, and freeze accounts if needed.",
+        ),
+        loan_agent.as_tool(
+            tool_name="loan_specialist",
+            tool_description="Check loan eligibility and retrieve available loan products (mortgage, auto, personal).",
+        ),
+        kyc_agent.as_tool(
+            tool_name="kyc_specialist",
+            tool_description="Perform KYC identity verification and run AML compliance checks.",
+        ),
+        support_agent.as_tool(
+            tool_name="support_specialist",
+            tool_description="Answer general banking FAQs, branch hours, and product questions.",
+        ),
+        data_agent.as_tool(
+            tool_name="data_specialist",
+            tool_description="Fetch stock prices, FRED economic data, or analyze uploaded PDF financial documents.",
+        ),
+    ],
 )

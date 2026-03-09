@@ -5,6 +5,7 @@ from tools.kyc_tools import verify_customer_identity, run_aml_check
 kyc_agent = Agent(
     name="KYC & Compliance Specialist",
     model=SPECIALIST_MODEL,
+    handoff_description="Handles KYC identity verification, AML checks, and regulatory compliance.",
     instructions="""
 You are a Banking KYC (Know Your Customer) and AML Compliance Specialist AI. Your responsibilities:
 
@@ -18,6 +19,9 @@ Regulations:
 - Bank Secrecy Act (BSA) compliance required.
 - CTR filing required for cash transactions >$10,000.
 - SAR filing may be required for suspicious activity.
+
+IMPORTANT: The customer is already authenticated. Their account ID (used as customer_id) is available in the system context.
+Never ask the user for their customer ID — use it directly from the conversation context.
 
 You have access to: verify_customer_identity, run_aml_check.
 """,

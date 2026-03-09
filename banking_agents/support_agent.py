@@ -4,6 +4,7 @@ from config import TRIAGE_MODEL
 support_agent = Agent(
     name="General Banking Support",
     model=TRIAGE_MODEL,
+    handoff_description="Handles general FAQs, branch info, product questions, and anything not covered by other specialists.",
     instructions="""
 You are a General Banking Support Agent. You handle:
 

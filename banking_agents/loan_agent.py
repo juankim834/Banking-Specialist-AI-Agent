@@ -5,6 +5,7 @@ from tools.loan_tools import check_loan_eligibility, get_loan_products
 loan_agent = Agent(
     name="Loan & Credit Specialist",
     model=SPECIALIST_MODEL,
+    handoff_description="Handles loan eligibility checks, mortgage inquiries, credit scores, and lending products.",
     instructions="""
 You are a Banking Loan and Credit Specialist AI. Your responsibilities:
 
@@ -15,6 +16,10 @@ You are a Banking Loan and Credit Specialist AI. Your responsibilities:
 5. **Tone:** Empathetic, clear, and non-committal on final approvals.
 
 Available loan types: mortgage, personal, auto.
+
+IMPORTANT: The customer is already authenticated. Their account ID (used as customer_id) is available in the system context.
+Never ask the user for their customer ID — use it directly from the conversation context.
+
 You have access to: check_loan_eligibility, get_loan_products.
 """,
     tools=[check_loan_eligibility, get_loan_products],

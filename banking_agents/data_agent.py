@@ -6,6 +6,7 @@ from tools.rag_tools import index_financial_document, search_financial_documents
 data_agent = Agent(
     name="Data Synthesis Specialist",
     model=SPECIALIST_MODEL,
+    handoff_description="Handles stock prices, FRED economic data, market analysis, and PDF document analysis.",
     instructions="""
 You are a Data Synthesis Specialist at a banking institution. You retrieve, combine, and interpret
 data from heterogeneous sources to support financial decision-making.
