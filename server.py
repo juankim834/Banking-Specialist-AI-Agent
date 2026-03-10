@@ -226,6 +226,7 @@ async def chat(req: ChatRequest, x_session_token: str = Header(None)):
                 starting_agent=triage_agent,
                 input=conversation,
                 run_config=run_config,
+                max_turns=10,
             )
 
             response_text = result.final_output
