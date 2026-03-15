@@ -4,7 +4,7 @@ Document Processor: PDF parsing with section/header-based chunking and table ext
 Strategy
 --------
 * **Header detection**: span font-size compared to the page median — spans whose
-  size is >= HEADING_RATIO × median (or whose font flags indicate bold) are treated
+  size is >= HEADING_RATIO x median (or whose font flags indicate bold) are treated
   as section headings.  Text between headings is collected into a single chunk.
 * **Table extraction**: prefers PyMuPDF's native `page.find_tables()` (available
   since PyMuPDF ≥ 1.23).  Falls back to pdfplumber when PyMuPDF tables are absent
@@ -28,7 +28,7 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-# ── Constants ─────────────────────────────────────────────────────────────────
+# ── Constants
 
 UPLOAD_DIR = pathlib.Path("uploads")
 
@@ -39,7 +39,7 @@ HEADING_SIZE_RATIO: float = 1.15
 DEFAULT_MIN_CHUNK_CHARS: int = 80
 
 
-# ── Data model ────────────────────────────────────────────────────────────────
+# ── Data model
 
 
 @dataclass
@@ -55,7 +55,7 @@ class DocumentChunk:
     metadata: dict = field(default_factory=dict)
 
 
-# ── Main class ────────────────────────────────────────────────────────────────
+# ── Main class
 
 
 class DocumentProcessor:
@@ -71,7 +71,7 @@ class DocumentProcessor:
     def __init__(self, min_chunk_chars: int = DEFAULT_MIN_CHUNK_CHARS) -> None:
         self.min_chunk_chars = min_chunk_chars
 
-    # ── Public API ────────────────────────────────────────────────────────────
+    # ── Public API
 
     def process(self, filename: str) -> list[DocumentChunk]:
         """
@@ -125,7 +125,7 @@ class DocumentProcessor:
         )
         return chunks
 
-    # ── Internal helpers ──────────────────────────────────────────────────────
+    # ── Internal helpers
 
     def _extract_chunks(
         self,
@@ -149,7 +149,7 @@ class DocumentProcessor:
             sorted(all_sizes)[len(all_sizes) // 2] if all_sizes else 12.0
         )
 
-        # ── Pass 2: walk pages ───────────────────────────────────────────────
+        # ── Pass 2: walk pages
         chunks: list[DocumentChunk] = []
         chunk_counter = 0
 
@@ -190,7 +190,7 @@ class DocumentProcessor:
             chunk_counter += len(page_table_chunks)
             chunks.extend(page_table_chunks)
 
-            # ── Walk text spans, skip table bounding boxes ───────────────────
+            # ── Walk text spans, skip table bounding boxes
             page_dict = fitz_page.get_text(
                 "dict", flags=fitz.TEXT_PRESERVE_WHITESPACE
             )
@@ -229,7 +229,7 @@ class DocumentProcessor:
         flush_text(section_page)
         return chunks
 
-    # ── Table extraction ──────────────────────────────────────────────────────
+    # ── Table extraction
 
     def _extract_tables(
         self,
@@ -250,7 +250,7 @@ class DocumentProcessor:
         table_bboxes: list[tuple] = []
         counter = chunk_counter_start
 
-        # ── Strategy A: PyMuPDF native find_tables ───────────────────────────
+        # ── Strategy A: PyMuPDF native find_tables
         try:
             tabs = fitz_page.find_tables()
             for table in tabs:
@@ -276,7 +276,7 @@ class DocumentProcessor:
         except Exception:
             pass  # fall through to pdfplumber
 
-        # ── Strategy B: pdfplumber fallback ──────────────────────────────────
+        # ── Strategy B: pdfplumber fallback
         if plumber_page is not None:
             try:
                 for i, table in enumerate(plumber_page.extract_tables() or []):
@@ -304,7 +304,7 @@ class DocumentProcessor:
 
         return table_chunks, table_bboxes
 
-    # ── Markdown conversion ───────────────────────────────────────────────────
+    # ── Markdown conversion
 
     @staticmethod
     def _rows_to_markdown(rows: list[list] | None) -> str:

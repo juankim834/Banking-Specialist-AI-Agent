@@ -59,9 +59,6 @@ def fetch_fred_series(series_id: str, limit: int = 10) -> dict:
       GDP          - Gross Domestic Product (quarterly)
       T10Y2Y       - 10-Year minus 2-Year Treasury Yield Spread
       DEXUSEU      - USD/EUR Exchange Rate
-
-    Requires FRED_API_KEY environment variable.
-    Get a free key at https://fred.stlouisfed.org/docs/api/api_key.html
     """
     log_event("DataAgent", "fetch_fred_series", {"series_id": series_id, "limit": limit})
 

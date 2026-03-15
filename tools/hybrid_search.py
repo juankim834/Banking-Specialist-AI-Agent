@@ -36,7 +36,7 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-# ── Data model ────────────────────────────────────────────────────────────────
+# ── Data model
 
 
 @dataclass
@@ -54,7 +54,7 @@ class SearchResult:
     rrf_score: float            # fused Reciprocal Rank Fusion score
 
 
-# ── Engine ────────────────────────────────────────────────────────────────────
+# ── Engine
 
 
 class HybridSearchEngine:
@@ -82,7 +82,7 @@ class HybridSearchEngine:
         self._bm25: Optional[Any] = None               # BM25Okapi
         self._embeddings: Optional[np.ndarray] = None  # (N, D) float32, L2-normed
 
-    # ── Indexing ──────────────────────────────────────────────────────────────
+    # ── Indexing
 
     def index(self, chunks: list) -> None:
         """
@@ -94,7 +94,7 @@ class HybridSearchEngine:
         if not chunks:
             return
 
-        # ── Compute embeddings for new chunks only ──────────────────────────
+        # ── Compute embeddings for new chunks only
         model: Any = self._load_model()
         new_texts = [c.content for c in chunks]
         new_embs: np.ndarray = model.encode(
@@ -118,7 +118,7 @@ class HybridSearchEngine:
         norms = np.where(norms == 0.0, 1.0, norms)
         self._embeddings = self._embeddings / norms
 
-        # ── Rebuild BM25 over full corpus (fast) ────────────────────────────
+        # ── Rebuild BM25 over full corpus (fast)
         self._build_bm25()
 
         logger.info(
@@ -138,7 +138,7 @@ class HybridSearchEngine:
     def total_chunks(self) -> int:
         return len(self._chunks)
 
-    # ── Search ────────────────────────────────────────────────────────────────
+    # ── Search
 
     def search(self, query: str, top_k: int = 5) -> list[SearchResult]:
         """
@@ -166,7 +166,7 @@ class HybridSearchEngine:
 
         return self._rrf_fuse(bm25_ranked, vector_ranked)[:top_k]
 
-    # ── BM25 ──────────────────────────────────────────────────────────────────
+    # ── BM25
 
     def _build_bm25(self) -> None:
         try:
@@ -188,7 +188,7 @@ class HybridSearchEngine:
         ranked = sorted(enumerate(scores.tolist()), key=lambda x: x[1], reverse=True)
         return ranked[:top_k]
 
-    # ── Vector search ─────────────────────────────────────────────────────────
+    # ── Vector search
 
     def _load_model(self) -> Any:
         if self._st_model is None:
@@ -218,7 +218,7 @@ class HybridSearchEngine:
         ranked = sorted(enumerate(sims.tolist()), key=lambda x: x[1], reverse=True)
         return ranked[:top_k]
 
-    # ── Reciprocal Rank Fusion ────────────────────────────────────────────────
+    # ── Reciprocal Rank Fusion
 
     def _rrf_fuse(
         self,
@@ -268,7 +268,7 @@ class HybridSearchEngine:
             )
         return results
 
-    # ── Utilities ─────────────────────────────────────────────────────────────
+    # ── Utilities
 
     @staticmethod
     def _tokenise(text: str) -> list[str]:
