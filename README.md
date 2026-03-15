@@ -38,6 +38,7 @@ Banking-Specialist-AI-Agent/
 ├── config.py                  # LLM model selection & base document list
 ├── main.py                    # CLI entry point (Rich terminal chat)
 ├── server.py                  # FastAPI server + all REST endpoints
+├── db.py                      # Generating mocking account database
 ├── banking_agents/
 │   ├── triage_agent.py        # Orchestrator
 │   ├── account_agent.py

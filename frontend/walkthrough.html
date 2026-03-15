@@ -1080,15 +1080,15 @@
       <div class="card">
         <h3>🤖 LLM Model Options (<code>config.py</code>)</h3>
         <p>
-          Two model roles are defined: <strong>TRIAGE_MODEL</strong> (used for routing and lightweight agents)
-          and <strong>SPECIALIST_MODEL</strong> (used for complex reasoning). Both use <strong>LiteLLM</strong>
+          Two model roles are defined: <strong>TRIAGE_MODEL</strong>
+          and <strong>SPECIALIST_MODEL</strong>. Both use <strong>LiteLLM</strong>
           as a provider-agnostic wrapper — simply uncomment the desired provider block:
         </p>
         <ul>
-          <li><strong>Option A — Groq</strong>: <code>llama-3.1-8b-instant</code> / <code>llama-3.3-70b-versatile</code> (free tier, very fast) — requires <code>GROQ_API_KEY</code></li>
-          <li><strong>Option B — Anthropic Claude</strong>: <code>claude-haiku-3-5</code> / <code>claude-sonnet-4-5</code> — requires <code>ANTHROPIC_API_KEY</code></li>
+          <li><strong>Option A — Groq</strong>: <code>llama-3.3-70b-versatile</code> / code>llama-3.1-8b-instant</code> (free tier, very fast) — requires <code>GROQ_API_KEY</code></li>
+          <li><strong>Option B — Anthropic Claude</strong>:  <code>claude-sonnet-4-5</code> / <code>claude-haiku-3-5</code>  — requires <code>ANTHROPIC_API_KEY</code></li>
           <li><strong>Option C — Google Gemini</strong>: <code>gemini-2.5-flash</code> (currently active) — requires <code>GEMINI_API_KEY</code></li>
-          <li><strong>Option D — Mistral AI</strong>: <code>mistral-small-latest</code> / <code>mistral-large-latest</code> — requires <code>MISTRAL_API_KEY</code></li>
+          <li><strong>Option D — Mistral AI</strong>:  <code>mistral-large-latest</code> / <code>mistral-small-latest</code> — requires <code>MISTRAL_API_KEY</code></li>
         </ul>
       </div>
 
@@ -1190,6 +1190,8 @@
           <div class="flow-node">Specialist(s)<br/><small>as tools</small></div>
           <div class="flow-arrow">→</div>
           <div class="flow-node primary">Tool Functions</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node primary">Triage Agent</div>
           <div class="flow-arrow">→</div>
           <div class="flow-node">SSE Response</div>
           <div class="flow-arrow">→</div>
