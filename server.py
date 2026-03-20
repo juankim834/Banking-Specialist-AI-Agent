@@ -171,7 +171,6 @@ async def list_documents(x_session_token: str = Header(None)):
         })
     return {"documents": docs}
 
-
 @app.post("/index-document")
 async def index_document(
     req: IndexDocumentRequest,

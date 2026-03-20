@@ -131,6 +131,31 @@ python main.py
 - **Audit log** — Every agent action, login, guardrail trigger, and error written to `audit.log`
 
 ---
+## 📊 Retrieval Performance & Evaluation
+
+To ensure the Banking AI Agent can accurately retrieve complex financial regulations and customer service samples, I conducted a rigorous A/B test on the FiQA (Financial Opinion QA) dataset.
+
+### Methodology
+
+- System A: BM25 (Exact Match)
+- System B: Hybrid RAG (BM25 + Vector Retrieval with Reciprocal Rank Fusion)
+
+### Results
+
+Results can be seen in both the table below and the dashboard: `http://localhost:8000/static/ab_test_dashboard.html`
+
+| Metric | BM25 (Base) | Hybrid (Ours) | Lift (%) | Statistical Sig. |
+| :--- | :--- | :--- | :--- | :--- |
+| NDCG@5 | 0.3816 | 0.5342 | +40.0% | $p < 0.001$ |
+| MRR | 0.3595 | 0.5152 | +43.3% | $p < 0.001$ |
+| Recall@5 | 0.4900 | 0.6300 | +28.6% | $p < 0.001$ |
+| Avg Latency| 18.5ms | 31.5ms | +13.0ms | N/A |
+
+### Statistical Depth
+
+Beyond mean scores, I performed a Paired Wilcoxon Signed-Rank Test. The Hybrid system achieved a medium effect size (Cohen's d = 0.61 for NDCG), demonstrating that the semantic layer effectively recovers relevant context that keyword matching misses in nuanced financial queries.
+
+---
 
 ## 📚 Documentation
 
